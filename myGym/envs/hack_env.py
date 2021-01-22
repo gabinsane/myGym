@@ -45,7 +45,7 @@ class HackEnv(CameraEnv):
         self.global_shift = [30,30,0]
         self.time_counter = 0
         self.parcels_done = 0
-        self.num_steps = 0
+        self.episode_steps = 0
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, )
 
     def _setup_scene(self):
@@ -100,7 +100,7 @@ class HackEnv(CameraEnv):
         self.p.stepSimulation()
         self.parcels_done = 0
         self.time_counter = 0
-        self.num_steps = 0
+        self.episode_steps = 0
         self._observation = self.get_observation()
         return self._observation
 
@@ -141,6 +141,7 @@ class HackEnv(CameraEnv):
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += 0.25
+        self.episode_steps += 1
         return self._observation, reward
 
     def compute_reward(self, observation):
