@@ -87,13 +87,40 @@ class TaskModule():
         Returns:
             :return self._observation: (array) Task relevant observation data, positions of task objects 
         """
-        self._observation = []
-        for robot_id in range(1,len(self.robots)):
+        self._observation = np.zeros([self.env.num_robots,self.obsdim])
+        self._obs = np.zeros([self.env.num_robots,obsdim-1])
+        self._xy = np.zeros([self.env.num_robots,2])
+        self._theta = np.zeros([self.env.num_robots,1])
+
+        for robot_id in range(self.env.num_robots):
             xygoal = self.xygoals[robot_id] #robot's goal
             robot_xytheta = self.env.robot.get_data(robot_id) #robot returns x y theta
-            self._observation[robot_id].append(robot_xytheta,xygoal)
+            self._obs[robot_id] = np.append(robot_xytheta,xygoal)
 
-        #add distance compute
+            self._xy[robot_id] = np.array([robot_xytheta[0:2]])
+            self._theta[robot_id] = robot_xytheta[2]
+
+        #add distance compute - simulate sensor readings
+        self.obstacles = 1000*np.ones([self.env.num_robots,1])
+        for i in range(self.env.num_robots):
+            dist_sensor = obstacles[i]
+            vector2 = np.array([np.sin(self._theta[i]),np.cos(self._theta[i])])
+            for j in range(self.env.num_robots):
+                if i == j:
+                    continue   
+                vector1 = _xy[i] - _xy[j]
+                ss = np.linalg.norm(vector1)
+                
+                dot_product = (np.dot(vector1, vector2)) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
+                angle = np.arccos(dot_product)
+
+                perp = ss*np.sin(angle)
+                long = ss*np.cos(angle)
+                if (perp < 0.25) and self.obstacles[i] > long and long > 0: #if another robot in front of distance sensor
+                    dist_sensor = long - 0.5 #subtract robot dimensions
+            
+            self._observation[i] = np.append(self._obs[i],dist_sensor)
+
         return self._observation
 
     def check_vision_failure(self):
