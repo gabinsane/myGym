@@ -42,7 +42,7 @@ class TaskModule():
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
         self.obstacle_threshold = 0.15  # considered as collision
 
-        self.obsdim = 6
+        self.obsdim = (self.env.num_robots, 6)
 
     def reset_task(self):
         """
@@ -51,7 +51,7 @@ class TaskModule():
         self.last_distance = None
         self.init_distance = None
         self.current_norm_distance = None
-        
+
         self.xygoals = self.env.humans[0]*self.num_robots # home for loading ###########SAMPLE FROM HUMANS
         self.env.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.env.robots_waits = [2] * self.num_robots  # num steps to wait (loading)
