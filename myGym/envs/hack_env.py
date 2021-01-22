@@ -25,7 +25,7 @@ class HackEnv(CameraEnv):
                  obs_space=None,
                  visgym=1,
                  logdir=None,
-                 num_robots=1,
+                 num_robots=5,
                  render_on=0,
                  visualize=0,
                  robot_action=None,
@@ -37,6 +37,7 @@ class HackEnv(CameraEnv):
         self.task = None
         self.reward = HackReward(self, self.task)
         self.num_robots = num_robots
+        self.robots = []
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
@@ -62,13 +63,16 @@ class HackEnv(CameraEnv):
             pkg_resources.resource_filename("myGym", "envs/objects/assembly/urdf/sphere_holes.urdf"),
                                         [0.75,0.75,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "cube2")
 
-        self.robot = HackRobot(pybullet_client=self.p)
+        for robot_id in range(self.num_robots):
+
+            self.robots.append(HackRobot(position = [0+robot_id*0.75, 0, 0], pybullet_client=self.p))
 
     def _set_observation_space(self):
         """
         Set observation space type, dimensions and range
         """
-        observationDim = self.task.obsdim
+        # TODO: set dimension
+        observationDim = 6
         observation_high = np.array([100] * observationDim)
         self.observation_space = spaces.Box(-observation_high,
                                             observation_high)
@@ -77,10 +81,13 @@ class HackEnv(CameraEnv):
         """
         Set action space dimensions and range
         """
-        action_dim = 3
-        self.action_low = np.array([-1] * action_dim)
-        self.action_high = np.array([1] * action_dim)
-        self.action_space = spaces.Box(np.array([-1]*action_dim), np.array([1]*action_dim))
+        action_dim = 2
+        self.action_low = np.tile([-np.pi, -1], self.num_robots)
+        self.action_high = np.tile([np.pi, 1], self.num_robots)
+        self.action_space = spaces.Box(self.action_low, self.action_high)
+
+
+
 
     def reset(self, hard=False):
         """
@@ -92,8 +99,8 @@ class HackEnv(CameraEnv):
             :return self._observation: (list) Observation data of the environment
         """
         super().reset(hard=hard)
-        self.robot.reset()
-        self.task.reset_task()
+        #self.robot.reset()
+        #self.task.reset_task()
         self.reward.reset()
         self.p.stepSimulation()
         self.parcels_done = 0
@@ -105,9 +112,7 @@ class HackEnv(CameraEnv):
         """
         Add cameras to the environment
         """
-        camera_args = self.workspace_dict[self.workspace]['camera']
-        for cam_idx in range(len(camera_args['position'])):
-            self.add_camera(position=camera_args['position'][cam_idx], target_position=camera_args['target'][cam_idx], distance=0.001, is_absolute_position=True)
+        pass
 
     def get_observation(self):
         """
@@ -130,15 +135,16 @@ class HackEnv(CameraEnv):
             :return done: (bool) Whether this stop is episode's final
             :return info: (dict) Additional information about step
         """
+        actions = actions.reshape(-1,2)
         for robot_idx, action in enumerate(actions):
             self._apply_action_robot(action, robot_idx)
         self._observation = self.get_observation()
-        reward = self.compute_reward(observation=self._observation)
+        reward = 0 #self.compute_reward(observation=self._observation)
         self.episode_reward += reward
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += 0.25
-        return self._observation, reward
+        return self._observation, reward, None, None
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
@@ -154,4 +160,4 @@ class HackEnv(CameraEnv):
         Parameters:
             :param action: (list) Action data returned by trained model
         """
-        pass
+        self.robots[robot_idx].apply_action(np.append(action, 2))
