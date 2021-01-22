@@ -81,7 +81,7 @@ class HackReward(Reward):
             else:
                 rewards_updated.append(reward)
         for ix, o in enumerate(observation):
-            self.goal_reached[ix] = 1 if self.task.check_distance_threshold(o) else 0
+            self.goal_reached[ix] = 1 if self.task.check_distance_threshold(o,ix) else 0
         self.rewards_history.append(np.asarray(rewards_updated))
         return np.asarray(rewards_updated)
 
