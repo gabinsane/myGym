@@ -12,6 +12,12 @@ register(
     max_episode_steps=8192,
 )
 
+register(
+    id="HackEnv-v0",
+    entry_point="myGym.envs.hack_env:HackEnv",
+    max_episode_steps=8192,
+)
+
 
 register(
     id="ObjectTestEnv-v0",
