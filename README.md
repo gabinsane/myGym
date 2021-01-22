@@ -20,7 +20,7 @@ We introduce myGym, a toolkit suitable for fast prototyping of neural networks i
 
 
 
-Learn more about the toolbox in [documentation](https://incognite.ciirc.cvut.cz/mygym/)
+Learn more about the toolbox in [documentation](https://incognite.ciirc.cvut.cz/mygym/) 
 
 ## Modular Structure
 
