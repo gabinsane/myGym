@@ -1,6 +1,7 @@
 from myGym.envs.base_env import CameraEnv
 from myGym.envs.rewards import HackReward
 from myGym.envs.hack_robot import HackRobot
+from myGym.envs.task import TaskModule
 from myGym.envs.base_env import CameraEnv
 import pybullet
 import time
@@ -14,9 +15,6 @@ import pkg_resources
 currentdir = pkg_resources.resource_filename("myGym", "envs")
 repodir = pkg_resources.resource_filename("myGym", "")
 print("current_dir=" + currentdir)
-holes = []  # list of coordinates of all holes
-humans = [] # list of coordinates of all humans
-
 
 
 class HackEnv(CameraEnv):
@@ -34,10 +32,13 @@ class HackEnv(CameraEnv):
                  gui_on=0
                  ):
 
-        self.task = None
-        self.reward = HackReward(self, self.task)
         self.num_robots = num_robots
+<<<<<<< HEAD
         self.robots = []
+=======
+        self.task = TaskModule(logdir=logdir, env=self)
+        self.reward = HackReward(self, self.task, num_robots=num_robots)
+>>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
@@ -45,7 +46,14 @@ class HackEnv(CameraEnv):
         self.global_shift = [30,30,0]
         self.time_counter = 0
         self.parcels_done = 0
-        super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, )
+        self.episode_steps = 0
+        self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
+        self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
+        self.timestep = 0.25 #sec
+        self.holes = [[10,10],[15,15]]  # list of coordinates of all holes
+        self.humans = [[30,0]] # list of coordinates of all humans
+
+        super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
     def _setup_scene(self):
         """
@@ -71,9 +79,14 @@ class HackEnv(CameraEnv):
         """
         Set observation space type, dimensions and range
         """
+<<<<<<< HEAD
         # TODO: set dimension
         observationDim = 6
         observation_high = np.array([100] * observationDim)
+=======
+        observationDim = self.task.obsdim
+        observation_high = np.full(observationDim, 100)
+>>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
         self.observation_space = spaces.Box(-observation_high,
                                             observation_high)
 
@@ -105,6 +118,7 @@ class HackEnv(CameraEnv):
         self.p.stepSimulation()
         self.parcels_done = 0
         self.time_counter = 0
+        self.episode_steps = 0
         self._observation = self.get_observation()
         return self._observation
 
@@ -112,7 +126,14 @@ class HackEnv(CameraEnv):
         """
         Add cameras to the environment
         """
+<<<<<<< HEAD
         pass
+=======
+        camera_args = {'position': [[-0.0, 2.1, 1.0], [0.0, -1.7, 1.2], [3.5, -0.6, 1.0], [-3.5, -0.7, 1.0], [-0.0, 2.0, 4.9]],
+                       'target': [[0.0, 0.0, 0.7], [-0.0, 1.3, 0.2], [3.05, -0.2, 0.9], [-2.9, -0.2, 0.9], [-0.0, 2.1, 3.6]]}
+        for cam_idx in range(len(camera_args['position'])):
+            self.add_camera(position=camera_args['position'][cam_idx], target_position=camera_args['target'][cam_idx], distance=0.001, is_absolute_position=True)
+>>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
 
     def get_observation(self):
         """
@@ -121,7 +142,7 @@ class HackEnv(CameraEnv):
         Returns:
             :return observation: (array) Represented position of task relevant objects
         """
-        return np.zeros(6)
+        return np.zeros((self.num_robots, 6), np.float)
 
     def step(self, actions):
         """
@@ -137,20 +158,38 @@ class HackEnv(CameraEnv):
         """
         actions = actions.reshape(-1,2)
         for robot_idx, action in enumerate(actions):
-            self._apply_action_robot(action, robot_idx)
+            if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
+                self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
+            else:
+                self._apply_action_robot(action, robot_idx) #if not waiting, apply action
         self._observation = self.get_observation()
+<<<<<<< HEAD
         reward = 0 #self.compute_reward(observation=self._observation)
         self.episode_reward += reward
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += 0.25
         return self._observation, reward, None, None
+=======
+        reward = self.compute_reward(observation=self._observation)
+        self.episode_reward += np.mean(reward)  # not sure where this is used
+        #info = {'d': self.task.last_distance / self.task.init_distance,
+        #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
+        self.time_counter += self.timestep
+        self.episode_steps += 1
+        return self._observation, reward
+>>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
-        if self.reward.goal_reached:
-            self.parcels_done += 1
-            print("Success! Parcels sorted: {}".format(self.parcels_done))
+        for ix, goal in enumerate(self.reward.goals_reached):
+            if goal == 1 and self.robots_states[ix] == 0:
+                self.parcels_done += 1
+                print("Robot {} succeeded! Overall parcels sorted: {}".format(ix, self.parcels_done))
+                self.reward.goals_reached[ix] = 0
+            elif goal == 1 and self.robots_states[ix] == 1:
+                print("Robot {} picked up parcel".format(ix))
+                self.reward.goals_reached[ix] = 0
         return reward
 
     def _apply_action_robot(self, action, robot_idx):

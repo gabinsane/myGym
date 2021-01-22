@@ -42,7 +42,7 @@ class TaskModule():
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
         self.obstacle_threshold = 0.15  # considered as collision
 
-        self.obsdim = 6
+        self.obsdim = (self.env.num_robots, 6)
 
     def reset_task(self):
         """
@@ -51,12 +51,10 @@ class TaskModule():
         self.last_distance = None
         self.init_distance = None
         self.current_norm_distance = None
-        self.vision_module.mask = {}
-        self.vision_module.centroid = {}
-        self.vision_module.centroid_transformed = {}
-        self.env.task_objects.append(self.env.robot)
-        if self.reward_type == '2dvu':
-            self.generate_new_goal(self.env.objects_area_boarders, self.env.active_cameras)
+
+        self.xygoals = self.env.humans[0]*self.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
+        self.env.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
+        self.env.robots_waits = [2] * self.num_robots  # num steps to wait (loading)
 
     def render_images(self):
         render_info = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)
@@ -87,13 +85,40 @@ class TaskModule():
         Returns:
             :return self._observation: (array) Task relevant observation data, positions of task objects 
         """
-        self._observation = []
-        for robot_id in range(1,len(self.robots)):
-            xygoal = self.xygoals[robot_id] #robot's goal
-            robot_xytheta = self.env.robot.get_data(robot_id) #robot returns x y theta
-            self._observation[robot_id].append(robot_xytheta,xygoal)
+        self._observation = np.zeros([self.env.num_robots,self.obsdim])
+        self._obs = np.zeros([self.env.num_robots,obsdim-1])
+        self._xy = np.zeros([self.env.num_robots,2])
+        self._theta = np.zeros([self.env.num_robots,1])
 
-        #add distance compute
+        for robot_id in range(self.env.num_robots):
+            xygoal = self.xygoals[robot_id] #robot's goal
+            robot_xytheta = self.env.robot.get_observation(robot_id) #robot returns x y theta
+            self._obs[robot_id] = np.append(robot_xytheta,xygoal)
+
+            self._xy[robot_id] = np.array([robot_xytheta[0:2]])
+            self._theta[robot_id] = robot_xytheta[2]
+
+        #add distance compute - simulate sensor readings
+        self.obstacles = 1000*np.ones([self.env.num_robots,1])
+        for i in range(self.env.num_robots):
+            dist_sensor = obstacles[i]
+            vector2 = np.array([np.sin(self._theta[i]),np.cos(self._theta[i])])
+            for j in range(self.env.num_robots):
+                if i == j:
+                    continue   
+                vector1 = _xy[i] - _xy[j]
+                ss = np.linalg.norm(vector1)
+                
+                dot_product = (np.dot(vector1, vector2)) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
+                angle = np.arccos(dot_product)
+
+                perp = ss*np.sin(angle)
+                long = ss*np.cos(angle)
+                if (perp < 0.25) and self.obstacles[i] > long and long > 0: #if another robot in front of distance sensor
+                    dist_sensor = long - 0.5 #subtract robot dimensions
+            
+            self._observation[i] = np.append(self._obs[i],dist_sensor)
+
         return self._observation
 
     def check_vision_failure(self):
@@ -142,17 +167,27 @@ class TaskModule():
                 return True
         return False
 
-    def check_distance_threshold(self, observation):
+    def check_distance_threshold(self, observation, idx):
         """
         Check if the distance between relevant task objects is under threshold for successful task completion
 
         Returns:
             :return: (bool)
         """
-        o1 = observation[0:2]
-        o2 = observation[3:5]
+        o1 = observation[:,0:2]
+        o2 = observation[:,3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
-        return self.current_norm_distance < self.goal_threshold
+        goal_reached = self.current_norm_distance < self.goal_threshold
+        if goal_reached and self.robots_states[idx] == 1: #ready for unloading
+            self.robots_waits[idx] = 1 #wait 1s
+            self.robots_states[idx] = 0 #unload
+            self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
+        elif goal_reached and self.robots_states[idx] == 0: #ready for loading
+            self.robots_waits[idx] = 2 #wait 2s
+            self.robots_states[idx] = 1 #load
+            self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
+
+        return goal_reached
 
     def check_goal(self):
         """
@@ -191,9 +226,9 @@ class TaskModule():
             :return dist: (float) Distance between 2 float arrays
         """
         if self.distance_type == "euclidean":
-            dist = np.linalg.norm(np.asarray(obj1) - np.asarray(obj2))
+            dist = np.linalg.norm(np.asarray(obj1) - np.asarray(obj2), axis=1)
         elif self.distance_type == "manhattan":
-            dist = cityblock(obj1, obj2)
+            dist = cityblock(obj1, obj2)  # NOT IMPLEMENTED FOR HACK!!
         return dist
 
     def calc_rotation_diff(self, obj1, obj2):
