@@ -38,6 +38,7 @@ class TaskModule():
         self.current_norm_distance = None
         self.stored_observation = []
         self.fig = None
+        self.xygoals = self.env.humans[0]*self.env.num_robots
 
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
         self.obstacle_threshold = 0.15  # considered as collision

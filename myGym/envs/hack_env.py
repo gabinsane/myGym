@@ -34,6 +34,8 @@ class HackEnv(CameraEnv):
 
         self.num_robots = num_robots
         self.robots = []
+        self.holes = [[10,10],[15,15]]  # list of coordinates of all holes
+        self.humans = [[30,0]] # list of coordinates of all humans
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
         self.obs_space = obs_space
@@ -47,8 +49,7 @@ class HackEnv(CameraEnv):
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
         self.timestep = 0.125 #sec
-        self.holes = [[10,10],[15,15]]  # list of coordinates of all holes
-        self.humans = [[30,0]] # list of coordinates of all humans
+
 
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
@@ -154,7 +155,7 @@ class HackEnv(CameraEnv):
                 self._apply_action_robot(action, robot_idx) #if not waiting, apply action
         self.check_collision()
         self._observation = self.get_observation()
-        reward = 0 # TODO: fix self.compute_reward(observation=self._observation)
+        reward = self.compute_reward(observation=self._observation)
         self.episode_reward += np.mean(reward)  # not sure where this is used
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
