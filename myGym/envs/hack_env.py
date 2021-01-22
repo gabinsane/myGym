@@ -1,5 +1,7 @@
 from myGym.envs.gym_env import GymEnv
 from myGym.envs.rewards import HackReward
+from myGym.envs.hack_robot import HackRobot
+from myGym.envs.base_env import CameraEnv
 import pybullet
 import time
 import numpy as np
@@ -14,7 +16,7 @@ repodir = pkg_resources.resource_filename("myGym", "")
 print("current_dir=" + currentdir)
 
 
-class HackEnv(GymEnv):
+class HackEnv(CameraEnv):
     def __init__(self,
                  action_repeat=1,
                  active_cameras=None,
@@ -26,12 +28,13 @@ class HackEnv(GymEnv):
                  ):
 
         self.task = None
-        self.reward = HackReward(self.env, self.task)
+        self.reward = HackReward(self, self.task)
 
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
         self.logdir = logdir
+        self.global_shift = [30,30,0]
         self.time_counter = 0
         self.parcels_done = 0
         super(HackEnv, self).__init__(active_cameras=active_cameras, **kwargs)
@@ -51,6 +54,8 @@ class HackEnv(GymEnv):
         self._add_scene_object_uid(self.p.loadURDF(
             pkg_resources.resource_filename("myGym", "envs/objects/assembly/urdf/sphere_holes.urdf"),
                                         [0.75,0.75,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "cube2")
+
+        self.robot = HackRobot(pybullet_client=self.p)
 
     def _set_observation_space(self):
         """
@@ -104,7 +109,7 @@ class HackEnv(GymEnv):
         Returns:
             :return observation: (array) Represented position of task relevant objects
         """
-        pass
+        return np.zeros(6)
 
     def step(self, actions):
         """
