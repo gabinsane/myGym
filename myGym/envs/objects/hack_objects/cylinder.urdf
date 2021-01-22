@@ -1,0 +1,33 @@
+
+<?xml version="1.0" ?>
+<robot name="cylinder">
+  <link name="base">
+    <contact>
+            <restitution value="0.5" />
+            <rolling_friction value="0.03"/>
+            <spinning_friction value="0.03"/>
+    </contact>
+     <inertial>
+       <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+       <mass value="1"/>
+       <inertia ixx="100"  ixy="0"  ixz="0" iyy="100" iyz="0" izz="100" />
+     </inertial>
+
+     <visual>
+       <origin xyz="0 0 0" rpy="0 0 0"/>
+       <geometry>
+         <cylinder radius="0.2" length="0.1"/>
+       </geometry>
+       <material name="Cyan">
+         <color rgba="0 1.0 1.0 1.0"/>
+       </material>
+     </visual>
+
+     <collision>
+       <origin xyz="0 0 0" rpy="0 0 0"/>
+       <geometry>
+         <cylinder radius="0.2" length="0.1"/>
+       </geometry>
+     </collision>
+   </link>
+</robot>
