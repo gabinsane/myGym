@@ -52,6 +52,10 @@ class TaskModule():
         self.init_distance = None
         self.current_norm_distance = None
 
+        self.xygoals = self.env.humans[0]*self.num_robots # home for loading ###########SAMPLE FROM HUMANS
+        self.env.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
+        self.env.robots_waits = [2] * self.num_robots  # num steps to wait (loading)
+
     def render_images(self):
         render_info = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)
         self.image = render_info[self.env.active_cameras]["image"]
@@ -88,7 +92,7 @@ class TaskModule():
 
         for robot_id in range(self.env.num_robots):
             xygoal = self.xygoals[robot_id] #robot's goal
-            robot_xytheta = self.env.robot.get_data(robot_id) #robot returns x y theta
+            robot_xytheta = self.env.robot.get_observation(robot_id) #robot returns x y theta
             self._obs[robot_id] = np.append(robot_xytheta,xygoal)
 
             self._xy[robot_id] = np.array([robot_xytheta[0:2]])
@@ -163,7 +167,7 @@ class TaskModule():
                 return True
         return False
 
-    def check_distance_threshold(self, observation):
+    def check_distance_threshold(self, observation, idx):
         """
         Check if the distance between relevant task objects is under threshold for successful task completion
 
@@ -173,7 +177,17 @@ class TaskModule():
         o1 = observation[:,0:2]
         o2 = observation[:,3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
-        return self.current_norm_distance < self.goal_threshold
+        goal_reached = self.current_norm_distance < self.goal_threshold
+        if goal_reached and self.robots_states[idx] == 1: #ready for unloading
+            self.robots_waits[idx] = 1 #wait 1s
+            self.robots_states[idx] = 0 #unload
+            self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
+        elif goal_reached and self.robots_states[idx] == 0: #ready for loading
+            self.robots_waits[idx] = 2 #wait 2s
+            self.robots_states[idx] = 1 #load
+            self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
+
+        return goal_reached
 
     def check_goal(self):
         """

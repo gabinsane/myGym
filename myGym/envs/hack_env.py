@@ -47,6 +47,8 @@ class HackEnv(CameraEnv):
         self.parcels_done = 0
         self.episode_steps = 0
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
+        self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
+        self.timestep = 0.25 #sec
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
     def _setup_scene(self):
@@ -136,13 +138,16 @@ class HackEnv(CameraEnv):
             :return info: (dict) Additional information about step
         """
         for robot_idx, action in enumerate(actions):
-            self._apply_action_robot(action, robot_idx)
+            if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
+                self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
+            else:
+                self._apply_action_robot(action, robot_idx) #if not waiting, apply action
         self._observation = self.get_observation()
         reward = self.compute_reward(observation=self._observation)
         self.episode_reward += np.mean(reward)  # not sure where this is used
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
-        self.time_counter += 0.25
+        self.time_counter += self.timestep
         self.episode_steps += 1
         return self._observation, reward
 
