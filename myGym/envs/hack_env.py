@@ -26,19 +26,30 @@ class HackEnv(GymEnv):
                  ):
 
         self.task = None
-        self.reward = HackReward(self.env)
+        #self.reward = HackReward(self.env)
 
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
         self.logdir = logdir
+        self.global_shift = [30,30,0]
         super(HackEnv, self).__init__(active_cameras=active_cameras, **kwargs)
 
     def _setup_scene(self):
         """
         Set-up environment scene. Load static objects, apply textures. Load robot.
         """
-        pass
+        self._add_scene_object_uid(self.p.loadURDF(pkg_resources.resource_filename("myGym", "/envs/rooms/hack_plane.urdf"),
+                                        np.add([0,0,0], self.global_shift), [0,0,0,1], useFixedBase=True, useMaximalCoordinates=True), "floor")
+        self._add_scene_object_uid(self.p.loadURDF(
+                pkg_resources.resource_filename("myGym", "/envs/rooms/hack_room.urdf"),
+                                            [0,0,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "gym")
+        self._add_scene_object_uid(self.p.loadURDF(
+            pkg_resources.resource_filename("myGym", "envs/objects/assembly/urdf/sphere_holes.urdf"),
+                                        [0,0,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "cube1")
+        self._add_scene_object_uid(self.p.loadURDF(
+            pkg_resources.resource_filename("myGym", "envs/objects/assembly/urdf/sphere_holes.urdf"),
+                                        [0.75,0.75,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "cube2")
 
     def _set_observation_space(self):
         """
@@ -50,7 +61,10 @@ class HackEnv(GymEnv):
         """
         Set action space dimensions and range
         """
-        pass
+        action_dim = 3
+        self.action_low = np.array([-1] * action_dim)
+        self.action_high = np.array([1] * action_dim)
+        self.action_space = spaces.Box(np.array([-1]*action_dim), np.array([1]*action_dim))
 
     def reset(self, hard=False):
         """
@@ -61,7 +75,7 @@ class HackEnv(GymEnv):
         Returns:
             :return self._observation: (list) Observation data of the environment
         """
-        super().reset(hard=hard)
+        #super().reset(hard=hard)
 
         pass
 
@@ -94,7 +108,7 @@ class HackEnv(GymEnv):
             :return done: (bool) Whether this stop is episode's final
             :return info: (dict) Additional information about step
         """
-        pass
+        return None, None, None, None
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         #@TODO: Reward computation for HER, argument for .compute()
