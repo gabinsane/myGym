@@ -52,9 +52,9 @@ class TaskModule():
         self.init_distance = None
         self.current_norm_distance = None
 
-        self.xygoals = self.env.humans[0]*self.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
-        self.env.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
-        self.env.robots_waits = [2] * self.num_robots  # num steps to wait (loading)
+        self.xygoals = self.env.humans[0]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
+        self.env.robots_states = [0] * self.env.num_robots  # 0 for unloaded, 1 for loaded
+        self.env.robots_waits = [2] * self.env.num_robots  # num steps to wait (loading)
 
     def render_images(self):
         render_info = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)
@@ -179,13 +179,13 @@ class TaskModule():
         self.current_norm_distance = self.calc_distance(o1, o2)
         goal_reached = self.current_norm_distance < self.goal_threshold
         for idx in range(len(goal_reached)): #@TODO matrix intead of for cycle
-            if goal_reached[idx] and self.robots_states[idx] == 1: #ready for unloading
-                self.robots_waits[idx] = 1 #wait 1s
-                self.robots_states[idx] = 0 #unload
+            if goal_reached[idx] and self.env.robots_states[idx] == 1: #ready for unloading
+                self.env.robots_waits[idx] = 1 #wait 1s
+                self.env.robots_states[idx] = 0 #unload
                 self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
-            elif goal_reached[idx] and self.robots_states[idx] == 0: #ready for loading
-                self.robots_waits[idx] = 2 #wait 2s
-                self.robots_states[idx] = 1 #load
+            elif goal_reached[idx] and self.env.robots_states[idx] == 0: #ready for loading
+                self.env.robots_waits[idx] = 2 #wait 2s
+                self.env.robots_states[idx] = 1 #load
                 self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
 
         return goal_reached
