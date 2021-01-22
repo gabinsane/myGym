@@ -1,4 +1,4 @@
-from myGym.envs.gym_env import GymEnv
+from myGym.envs.base_env import CameraEnv
 from myGym.envs.rewards import HackReward
 import pybullet
 import time
@@ -17,16 +17,19 @@ humans = [] # list of coordinates of all humans
 
 
 
-class HackEnv(GymEnv):
+class HackEnv(CameraEnv):
     def __init__(self,
-                 action_repeat=1,
                  active_cameras=None,
                  obs_space=None,
-                 visualize=0,
                  visgym=1,
                  logdir=None,
                  num_robots=1,
-                 **kwargs
+                 render_on=0,
+                 visualize=0,
+                 robot_action=None,
+                 robot_init_joint_poses=None,
+                 max_steps=1000,
+                 gui_on=0
                  ):
 
         self.task = None
@@ -38,7 +41,7 @@ class HackEnv(GymEnv):
         self.logdir = logdir
         self.time_counter = 0
         self.parcels_done = 0
-        super(HackEnv, self).__init__(active_cameras=active_cameras, **kwargs)
+        super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, )
 
     def _setup_scene(self):
         """

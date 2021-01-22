@@ -62,15 +62,11 @@ def save_results(arg_dict, model_name, env, model_logdir=None, show=False):
 
 def configure_env(arg_dict, model_logdir=None, for_train=True):
     if arg_dict["engine"] == "pybullet":
-        env_arguments = {"render_on": True, "visualize": arg_dict["visualize"], "workspace": arg_dict["workspace"],
-                         "robot": arg_dict["robot"], "num_robots":arg_dict["num_robots"],"robot_init_joint_poses": arg_dict["robot_init"],
-                         "robot_action": arg_dict["robot_action"], "task_type": arg_dict["task_type"],
-                         "task_objects":arg_dict["task_objects"], "reward_type": arg_dict["reward_type"],
-                         "distance_type": arg_dict["distance_type"], "used_objects": arg_dict["used_objects"],
-                         "object_sampling_area": arg_dict["object_sampling_area"], "active_cameras": arg_dict["camera"],
+        env_arguments = {"render_on": True, "visualize": arg_dict["visualize"], "num_robots":arg_dict["num_robots"],"robot_init_joint_poses": arg_dict["robot_init"],
+                         "robot_action": arg_dict["robot_action"],
+                         "active_cameras": arg_dict["camera"],
                          "max_steps": arg_dict["max_episode_steps"], "visgym":arg_dict["visgym"],
-                         "reward": arg_dict["reward"], "logdir": arg_dict["logdir"], "vae_path": arg_dict["vae_path"],
-                         "yolact_path": arg_dict["yolact_path"], "yolact_config": arg_dict["yolact_config"]}
+                         "logdir": arg_dict["logdir"]}
         if for_train:
             env_arguments["gui_on"] = False
         else:
