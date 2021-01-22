@@ -49,6 +49,59 @@ class Reward:
             plt.gcf().set_size_inches(8, 6)
             plt.savefig(save_dir + "/reward_over_episodes_episode{}.png".format(self.env.episode_number))
             plt.close()
+
+
+class HackReward(Reward):
+
+    def __init__(self, env):
+        super(HackReward, self).__init__(env)
+        self.prev_bot_position = None
+
+    def compute(self, observation):
+        """
+        Compute reward signal based on distance between bot and destination..
+
+        Params:
+            :param observation: (list) Observation of the environment
+        Returns:
+            :return reward: (float) Reward signal for the environment
+        """
+        o1 = observation[0:2]
+        o2 = observation[5:6]
+        reward = self.calc_dist_diff(o1, o2)
+        self.task.check_distance_threshold(observation=observation)
+        self.rewards_history.append(reward)
+        return reward
+
+    def reset(self):
+        """
+        Reset stored value of distance between 2 objects. Call this after the end of an episode.
+        """
+        self.prev_bot_position = None
+
+    def calc_dist_diff(self, obj1_position, obj2_position):
+        """
+        Calculate change in the distance between 2 objects in previous and in current step. Normalize the change by the value of distance in previous step.
+
+        Params:
+            :param obj1_position: (list) Position of the first object
+            :param obj2_position: (list) Position of the second object
+        Returns:
+            :return norm_diff: (float) Normalized difference of distances between 2 objects in previsous and in current step
+        """
+        if self.prev_obj1_position is None and self.prev_obj2_position is None:
+            self.prev_obj1_position = obj1_position
+            self.prev_obj2_position = obj2_position
+        self.prev_diff = self.task.calc_distance(self.prev_obj1_position, self.prev_obj2_position)
+
+        current_diff = self.task.calc_distance(obj1_position, obj2_position)
+        norm_diff = (self.prev_diff - current_diff) / self.prev_diff
+
+        self.prev_obj1_position = obj1_position
+        self.prev_obj2_position = obj2_position
+
+        return norm_diff
+
         
 class DistanceReward(Reward):
     """
