@@ -42,7 +42,7 @@ GPU acceleration strongly reccomended
 
 Clone the repository:
 
-`git clone https://github.com/incognite-lab/mygym.git`
+`git https://github.com/gabinsane/myGym.git
 
 `cd mygym`
 
