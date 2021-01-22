@@ -23,7 +23,7 @@ class HackEnv(CameraEnv):
                  obs_space=None,
                  visgym=1,
                  logdir=None,
-                 num_robots=1,
+                 num_robots=5,
                  render_on=0,
                  visualize=0,
                  robot_action=None,
@@ -33,6 +33,7 @@ class HackEnv(CameraEnv):
                  ):
 
         self.num_robots = num_robots
+        self.robots = []
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
         self.obs_space = obs_space
@@ -67,7 +68,9 @@ class HackEnv(CameraEnv):
             pkg_resources.resource_filename("myGym", "envs/objects/assembly/urdf/sphere_holes.urdf"),
                                         [0.75,0.75,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "cube2")
 
-        self.robot = HackRobot(pybullet_client=self.p)
+        for robot_id in range(self.num_robots):
+
+            self.robots.append(HackRobot(position = [0+robot_id*0.75, 0, 0], pybullet_client=self.p))
 
     def _set_observation_space(self):
         """
@@ -82,10 +85,13 @@ class HackEnv(CameraEnv):
         """
         Set action space dimensions and range
         """
-        action_dim = 3
-        self.action_low = np.array([-1] * action_dim)
-        self.action_high = np.array([1] * action_dim)
-        self.action_space = spaces.Box(np.array([-1]*action_dim), np.array([1]*action_dim))
+        action_dim = 2
+        self.action_low = np.tile([-np.pi, -1], self.num_robots)
+        self.action_high = np.tile([np.pi, 1], self.num_robots)
+        self.action_space = spaces.Box(self.action_low, self.action_high)
+
+
+
 
     def reset(self, hard=False):
         """
@@ -97,8 +103,8 @@ class HackEnv(CameraEnv):
             :return self._observation: (list) Observation data of the environment
         """
         super().reset(hard=hard)
-        self.robot.reset()
-        self.task.reset_task()
+        #self.robot.reset()
+        #self.task.reset_task()
         self.reward.reset()
         self.p.stepSimulation()
         self.parcels_done = 0
@@ -140,6 +146,7 @@ class HackEnv(CameraEnv):
             :return done: (bool) Whether this stop is episode's final
             :return info: (dict) Additional information about step
         """
+        actions = actions.reshape(-1,2)
         for robot_idx, action in enumerate(actions):
             if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
                 self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
@@ -147,13 +154,13 @@ class HackEnv(CameraEnv):
                 self._apply_action_robot(action, robot_idx) #if not waiting, apply action
         self.check_collision()
         self._observation = self.get_observation()
-        reward = self.compute_reward(observation=self._observation)
+        reward = 0 # TODO: fix self.compute_reward(observation=self._observation)
         self.episode_reward += np.mean(reward)  # not sure where this is used
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += self.timestep
         self.episode_steps += 1
-        return self._observation, reward
+        return self._observation, reward, None, None
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
@@ -174,4 +181,4 @@ class HackEnv(CameraEnv):
         Parameters:
             :param action: (list) Action data returned by trained model
         """
-        pass
+        self.robots[robot_idx].apply_action(np.append(action, 2))
