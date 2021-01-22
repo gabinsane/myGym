@@ -52,7 +52,7 @@ class TaskModule():
         self.init_distance = None
         self.current_norm_distance = None
 
-        self.xygoals = self.env.humans[0]*self.num_robots # home for loading ###########SAMPLE FROM HUMANS
+        self.xygoals = self.env.humans[0]*self.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
         self.env.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.env.robots_waits = [2] * self.num_robots  # num steps to wait (loading)
 

@@ -15,9 +15,6 @@ import pkg_resources
 currentdir = pkg_resources.resource_filename("myGym", "envs")
 repodir = pkg_resources.resource_filename("myGym", "")
 print("current_dir=" + currentdir)
-holes = []  # list of coordinates of all holes
-humans = [] # list of coordinates of all humans
-
 
 
 class HackEnv(CameraEnv):
@@ -49,6 +46,9 @@ class HackEnv(CameraEnv):
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
         self.timestep = 0.25 #sec
+        self.holes = [[10,10],[15,15]]  # list of coordinates of all holes
+        self.humans = [[30,0]] # list of coordinates of all humans
+
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
     def _setup_scene(self):
