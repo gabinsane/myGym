@@ -56,6 +56,11 @@ class HackReward(Reward):
     def __init__(self, env):
         super(HackReward, self).__init__(env)
         self.prev_bot_position = None
+        self.prev_goal_position = None
+        self.goal_threshold = 0.1  # goal reached, robot unloads parcel
+        self.obstacle_threshold = 0.15  # considered as collision
+        self.collision_punishment_scale = 2  # how much punish collision
+        self.goal_reached = False
 
     def compute(self, observation):
         """
@@ -66,10 +71,12 @@ class HackReward(Reward):
         Returns:
             :return reward: (float) Reward signal for the environment
         """
-        o1 = observation[0:2]
-        o2 = observation[5:6]
+        o1 = observation[0:2]  # bot x, y
+        o2 = observation[4:6]  # goal x, y
         reward = self.calc_dist_diff(o1, o2)
-        self.task.check_distance_threshold(observation=observation)
+        if observation[3] < self.obstacle_threshold:  # if bot too close to obstacle
+            reward = reward * self.collision_punishment_scale
+        self.goal_reached = self.check_goal_threshold(o1, o2)
         self.rewards_history.append(reward)
         return reward
 
@@ -78,31 +85,41 @@ class HackReward(Reward):
         Reset stored value of distance between 2 objects. Call this after the end of an episode.
         """
         self.prev_bot_position = None
+        self.prev_goal_position = None
 
-    def calc_dist_diff(self, obj1_position, obj2_position):
+    def calc_dist_diff(self, bot_position, goal_position):
         """
         Calculate change in the distance between 2 objects in previous and in current step. Normalize the change by the value of distance in previous step.
 
         Params:
-            :param obj1_position: (list) Position of the first object
-            :param obj2_position: (list) Position of the second object
+            :param bot_position: (list) Position of the first object
+            :param goal_position: (list) Position of the second object
         Returns:
             :return norm_diff: (float) Normalized difference of distances between 2 objects in previsous and in current step
         """
-        if self.prev_obj1_position is None and self.prev_obj2_position is None:
-            self.prev_obj1_position = obj1_position
-            self.prev_obj2_position = obj2_position
-        self.prev_diff = self.task.calc_distance(self.prev_obj1_position, self.prev_obj2_position)
+        if self.prev_bot_position is None and self.prev_goal_position is None:
+            self.prev_bot_position = bot_position
+            self.prev_goal_position = goal_position
+        self.prev_diff = np.linalg.norm(np.asarray(self.prev_bot_position) - np.asarray(self.prev_goal_position))
 
-        current_diff = self.task.calc_distance(obj1_position, obj2_position)
+        current_diff = np.linalg.norm(np.asarray(bot_position) - np.asarray(goal_position))
         norm_diff = (self.prev_diff - current_diff) / self.prev_diff
-
-        self.prev_obj1_position = obj1_position
-        self.prev_obj2_position = obj2_position
+        self.prev_bot_position = bot_position
+        self.prev_goal_position = goal_position
 
         return norm_diff
 
-        
+    def check_goal_threshold(self, o1, o2):
+        """
+        Check if the distance between relevant task objects is under threshold for successful task completion
+
+        Returns:
+            :return: (bool)
+        """
+        self.current_norm_distance = np.linalg.norm(np.asarray(o1) - np.asarray(o2))
+        return self.current_norm_distance < self.goal_threshold
+
+
 class DistanceReward(Reward):
     """
     Reward class for reward signal calculation based on distance differences between 2 objects
