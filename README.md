@@ -1,5 +1,4 @@
-
-![alt text](myGym/images/mygymlogo.png "myGym")
+# Robothon 2021 Project - Robots and Artificial Intelligence 
 
 
 
