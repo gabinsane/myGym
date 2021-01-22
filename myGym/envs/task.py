@@ -181,11 +181,11 @@ class TaskModule():
         if goal_reached and self.robots_states[idx] == 1: #ready for unloading
             self.robots_waits[idx] = 1 #wait 1s
             self.robots_states[idx] = 0 #unload
-            self.xygoals[idx] = self.env.humans[0] ######SAMPLE from all humans
+            self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
         elif goal_reached and self.robots_states[idx] == 0: #ready for loading
             self.robots_waits[idx] = 2 #wait 2s
             self.robots_states[idx] = 1 #load
-            self.xygoals[idx] = self.env.holes[0] ######SAMPLE from all holes
+            self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
 
         return goal_reached
 
