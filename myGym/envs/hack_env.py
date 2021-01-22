@@ -1,6 +1,7 @@
 from myGym.envs.base_env import CameraEnv
 from myGym.envs.rewards import HackReward
 from myGym.envs.hack_robot import HackRobot
+from myGym.envs.task import TaskModule
 from myGym.envs.base_env import CameraEnv
 import pybullet
 import time
@@ -34,7 +35,7 @@ class HackEnv(CameraEnv):
                  gui_on=0
                  ):
 
-        self.task = None
+        self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task)
         self.num_robots = num_robots
         self.obs_space = obs_space
@@ -44,6 +45,7 @@ class HackEnv(CameraEnv):
         self.global_shift = [30,30,0]
         self.time_counter = 0
         self.parcels_done = 0
+        self.num_steps = 0
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, )
 
     def _setup_scene(self):
@@ -98,6 +100,7 @@ class HackEnv(CameraEnv):
         self.p.stepSimulation()
         self.parcels_done = 0
         self.time_counter = 0
+        self.num_steps = 0
         self._observation = self.get_observation()
         return self._observation
 
