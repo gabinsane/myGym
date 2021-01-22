@@ -10,7 +10,7 @@
 "visgym":1,
 #Robot
 "robot":"kuka",
-"num_robots":5,
+"num_robots":10,
 "robot_action":"joints",
 "robot_init":[0.0, 0.5, 0.5],
 #Task
