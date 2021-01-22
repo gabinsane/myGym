@@ -12,6 +12,9 @@ import pkg_resources
 currentdir = pkg_resources.resource_filename("myGym", "envs")
 repodir = pkg_resources.resource_filename("myGym", "")
 print("current_dir=" + currentdir)
+holes = []  # list of coordinates of all holes
+humans = [] # list of coordinates of all humans
+
 
 
 class HackEnv(GymEnv):
@@ -22,12 +25,13 @@ class HackEnv(GymEnv):
                  visualize=0,
                  visgym=1,
                  logdir=None,
+                 num_robots=1,
                  **kwargs
                  ):
 
         self.task = None
         self.reward = HackReward(self.env, self.task)
-
+        self.num_robots = num_robots
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym

@@ -63,7 +63,7 @@ def save_results(arg_dict, model_name, env, model_logdir=None, show=False):
 def configure_env(arg_dict, model_logdir=None, for_train=True):
     if arg_dict["engine"] == "pybullet":
         env_arguments = {"render_on": True, "visualize": arg_dict["visualize"], "workspace": arg_dict["workspace"],
-                         "robot": arg_dict["robot"], "robot_init_joint_poses": arg_dict["robot_init"],
+                         "robot": arg_dict["robot"], "num_robots":arg_dict["num_robots"],"robot_init_joint_poses": arg_dict["robot_init"],
                          "robot_action": arg_dict["robot_action"], "task_type": arg_dict["task_type"],
                          "task_objects":arg_dict["task_objects"], "reward_type": arg_dict["reward_type"],
                          "distance_type": arg_dict["distance_type"], "used_objects": arg_dict["used_objects"],
