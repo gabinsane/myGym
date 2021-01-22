@@ -23,7 +23,7 @@ class HackRobot:
 
         self.p = pybullet_client
 
-        self.robot_path = pkg_resources.resource_filename("myGym", "envs/objects/assembly/urdf/cube_holes.urdf")
+        self.robot_path = "envs/objects/assembly/urdf/cube_holes.urdf"
         self.position = np.array(position)
         self.orientation = np.array(orientation)
         self.orientation = self.p.getQuaternionFromEuler(self.orientation)
