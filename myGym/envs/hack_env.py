@@ -18,10 +18,7 @@ holes = []  # list of coordinates of all holes
 humans = [] # list of coordinates of all humans
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 91793bd6d4c0ab37fccef5a7ed9e887abe2102b6
 class HackEnv(CameraEnv):
     def __init__(self,
                  active_cameras=None,
@@ -39,11 +36,7 @@ class HackEnv(CameraEnv):
 
         self.task = None
         self.reward = HackReward(self, self.task)
-<<<<<<< HEAD
-
-=======
         self.num_robots = num_robots
->>>>>>> 91793bd6d4c0ab37fccef5a7ed9e887abe2102b6
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
