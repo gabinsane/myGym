@@ -1,4 +1,5 @@
-from myGym.envs.base_env import CameraEnv
+from myGym.envs.gym_env import GymEnv
+from myGym.envs.rewards import HackReward
 import pybullet
 import time
 import numpy as np
@@ -13,7 +14,7 @@ repodir = pkg_resources.resource_filename("myGym", "")
 print("current_dir=" + currentdir)
 
 
-class HackEnv(CameraEnv):
+class HackEnv(GymEnv):
     def __init__(self,
                  action_repeat=1,
                  active_cameras=None,
@@ -25,7 +26,7 @@ class HackEnv(CameraEnv):
                  ):
 
         self.task = None
-        self.reward = None
+        self.reward = HackReward(self.env)
 
         self.obs_space = obs_space
         self.visualize = visualize
