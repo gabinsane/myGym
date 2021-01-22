@@ -109,15 +109,15 @@ class HackEnv(GymEnv):
         for robot_idx, action in enumerate(actions):
             self._apply_action_robot(action, robot_idx)
         self._observation = self.get_observation()
-        reward = self.reward.compute(observation=self._observation)
+        reward = self.compute_reward(observation=self._observation)
         self.episode_reward += reward
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += 0.25
         return self._observation, reward
 
-    def compute_reward(self, achieved_goal, desired_goal, info):
-        reward = self.reward.compute(np.append(achieved_goal, desired_goal))
+    def compute_reward(self, observation):
+        reward = self.reward.compute(observation)
         if self.reward.goal_reached:
             self.parcels_done += 1
             print("Success! Parcels sorted: {}".format(self.parcels_done))
