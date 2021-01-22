@@ -34,15 +34,15 @@ def test_env(env, arg_dict):
                     cv2.putText(depth, 'Camera {}'.format(camera_id), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, .5,
                                 (0, 0, 0), 1, 0)
                     visualizations[1].append(depth)
-                    
-                if len(visualizations[0])%2 !=0:
-                        visualizations[0].append(255*np.ones(visualizations[0][0].shape, dtype=np.uint8))
-                        visualizations[1].append(255*np.ones(visualizations[1][0].shape, dtype=np.float32))
-                fig_rgb = np.vstack((np.hstack((visualizations[0][0::2])),np.hstack((visualizations[0][1::2]))))
-                fig_depth = np.vstack((np.hstack((visualizations[1][0::2])),np.hstack((visualizations[1][1::2]))))
-                cv2.imshow('Camera RGB renders', fig_rgb)
-                cv2.imshow('Camera depthrenders', fig_depth)
-                cv2.waitKey(1)
+
+                # if len(visualizations[0])%2 !=0:
+                #         visualizations[0].append(255*np.ones(visualizations[0][0].shape, dtype=np.uint8))
+                #         visualizations[1].append(255*np.ones(visualizations[1][0].shape, dtype=np.float32))
+                # fig_rgb = np.vstack((np.hstack((visualizations[0][0::2])),np.hstack((visualizations[0][1::2]))))
+                # fig_depth = np.vstack((np.hstack((visualizations[1][0::2])),np.hstack((visualizations[1][1::2]))))
+                # cv2.imshow('Camera RGB renders', fig_rgb)
+                # cv2.imshow('Camera depthrenders', fig_depth)
+                # cv2.waitKey(1)
 
             if done:
                 print("Episode finished after {} timesteps".format(t + 1))
