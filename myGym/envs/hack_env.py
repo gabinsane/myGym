@@ -1,4 +1,4 @@
-from myGym.envs.gym_env import GymEnv
+from myGym.envs.base_env import CameraEnv
 from myGym.envs.rewards import HackReward
 from myGym.envs.hack_robot import HackRobot
 from myGym.envs.base_env import CameraEnv
@@ -14,22 +14,36 @@ import pkg_resources
 currentdir = pkg_resources.resource_filename("myGym", "envs")
 repodir = pkg_resources.resource_filename("myGym", "")
 print("current_dir=" + currentdir)
+holes = []  # list of coordinates of all holes
+humans = [] # list of coordinates of all humans
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 91793bd6d4c0ab37fccef5a7ed9e887abe2102b6
 class HackEnv(CameraEnv):
     def __init__(self,
-                 action_repeat=1,
                  active_cameras=None,
                  obs_space=None,
-                 visualize=0,
                  visgym=1,
                  logdir=None,
-                 **kwargs
+                 num_robots=1,
+                 render_on=0,
+                 visualize=0,
+                 robot_action=None,
+                 robot_init_joint_poses=None,
+                 max_steps=1000,
+                 gui_on=0
                  ):
 
         self.task = None
         self.reward = HackReward(self, self.task)
+<<<<<<< HEAD
 
+=======
+        self.num_robots = num_robots
+>>>>>>> 91793bd6d4c0ab37fccef5a7ed9e887abe2102b6
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
@@ -37,7 +51,7 @@ class HackEnv(CameraEnv):
         self.global_shift = [30,30,0]
         self.time_counter = 0
         self.parcels_done = 0
-        super(HackEnv, self).__init__(active_cameras=active_cameras, **kwargs)
+        super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, )
 
     def _setup_scene(self):
         """

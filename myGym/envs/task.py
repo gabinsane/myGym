@@ -212,7 +212,7 @@ class TaskModule():
             diff = cityblock(obj1, obj2)
         return diff
 
-    def generate_new_goal(self, object_area_borders, camera_id):
+    def generate_new_goal(self, goal_list):
         """
         Generate an image of new goal for VEA vision model. This function is supposed to be called from env workspace.
         
@@ -220,25 +220,5 @@ class TaskModule():
             :param object_area_borders: (list) Volume in space where task objects can be located
             :param camera_id: (int) ID of environment camera active for image rendering
         """
-        if self.task_type == "push":
-            random_pos = self.env.task_objects[0].get_random_object_position(object_area_borders)
-            random_rot = self.env.task_objects[0].get_random_object_orientation()
-            self.env.robot.reset_up()
-            self.env.task_objects[0].set_position(random_pos)
-            self.env.task_objects[0].set_orientation(random_rot)
-            self.env.task_objects[1].set_position(random_pos)
-            self.env.task_objects[1].set_orientation(random_rot)
-            render_info = self.env.render(mode="rgb_array", camera_id = self.env.active_cameras)
-            self.goal_image = render_info[self.env.active_cameras]["image"]
-            random_pos = self.env.task_objects[0].get_random_object_position(object_area_borders)
-            random_rot = self.env.task_objects[0].get_random_object_orientation()
-            self.env.task_objects[0].set_position(random_pos)
-            self.env.task_objects[0].set_orientation(random_rot)
-        elif self.task_type == "reach":
-            bounded_action = [random.uniform(-3,-2.4) for x in range(2)]
-            action = [random.uniform(-2.9,2.9) for x in range(6)]
-            self.env.robot.reset_joints(bounded_action + action)
-            self.goal_image  = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)[self.env.active_cameras]['image']
-            self.env.robot.reset_up()
-            #self.goal_image = self.vision_module.vae_generate_sample()
+        return random.choice(goal_list)
 
