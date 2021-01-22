@@ -26,7 +26,7 @@ class HackEnv(GymEnv):
                  ):
 
         self.task = None
-        self.reward = HackReward(self.env)
+        self.reward = HackReward(self.env, self.task)
 
         self.obs_space = obs_space
         self.visualize = visualize

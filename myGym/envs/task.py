@@ -38,7 +38,10 @@ class TaskModule():
         self.current_norm_distance = None
         self.stored_observation = []
         self.fig = None
-        self.threshold = 0.1 # distance threshold for successful task completion
+
+        self.goal_threshold = 0.1  # goal reached, robot unloads parcel
+        self.obstacle_threshold = 0.15  # considered as collision
+
         self.obsdim = (len(env.task_objects_names) + 1) * 3
         if self.reward_type == 'gt':
             src = 'ground_truth'
@@ -166,11 +169,10 @@ class TaskModule():
         Returns:
             :return: (bool)
         """
-        observation = observation["observation"] if isinstance(observation, dict) else observation
-        o1 = observation[0:int(len(observation[:-3])/2)] if self.reward_type == "2dvu" else observation[0:3]
-        o2 = observation[int(len(observation[:-3])/2):-3]if self.reward_type == "2dvu" else observation[3:6]
+        o1 = observation[0:2]
+        o2 = observation[3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
-        return self.current_norm_distance < self.threshold
+        return self.current_norm_distance < self.goal_threshold
 
     def check_goal(self):
         """

@@ -53,12 +53,11 @@ class Reward:
 
 class HackReward(Reward):
 
-    def __init__(self, env):
+    def __init__(self, env, task):
         super(HackReward, self).__init__(env)
+        self.task = task
         self.prev_bot_position = None
         self.prev_goal_position = None
-        self.goal_threshold = 0.1  # goal reached, robot unloads parcel
-        self.obstacle_threshold = 0.15  # considered as collision
         self.collision_punishment_scale = 2  # how much punish collision
         self.goal_reached = False
 
@@ -72,9 +71,9 @@ class HackReward(Reward):
             :return reward: (float) Reward signal for the environment
         """
         o1 = observation[0:2]  # bot x, y
-        o2 = observation[4:6]  # goal x, y
+        o2 = observation[3:5]  # goal x, y
         reward = self.calc_dist_diff(o1, o2)
-        if observation[3] < self.obstacle_threshold:  # if bot too close to obstacle
+        if observation[3] < self.task.obstacle_threshold:  # if bot too close to obstacle
             reward = reward * self.collision_punishment_scale
         self.goal_reached = self.check_goal_threshold(o1, o2)
         self.rewards_history.append(reward)
@@ -117,7 +116,7 @@ class HackReward(Reward):
             :return: (bool)
         """
         self.current_norm_distance = np.linalg.norm(np.asarray(o1) - np.asarray(o2))
-        return self.current_norm_distance < self.goal_threshold
+        return self.current_norm_distance < self.task.goal_threshold
 
 
 class DistanceReward(Reward):
