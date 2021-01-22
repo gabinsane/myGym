@@ -38,7 +38,7 @@ class TaskModule():
         self.current_norm_distance = None
         self.stored_observation = []
         self.fig = None
-        self.xygoals = self.env.humans[0]*self.env.num_robots
+        self.xygoals = [self.env.humans[0]]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
 
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
         self.obstacle_threshold = 0.15  # considered as collision
@@ -53,7 +53,7 @@ class TaskModule():
         self.init_distance = None
         self.current_norm_distance = None
 
-        self.xygoals = self.env.humans[0]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
+        self.xygoals = [self.env.humans[0]]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
         self.env.robots_states = [0] * self.env.num_robots  # 0 for unloaded, 1 for loaded
         self.env.robots_waits = [2] * self.env.num_robots  # num steps to wait (loading)
 
@@ -86,24 +86,24 @@ class TaskModule():
         Returns:
             :return self._observation: (array) Task relevant observation data, positions of task objects 
         """
-        self._observation = np.zeros([self.env.num_robots,self.obsdim])
-        self._obs = np.zeros([self.env.num_robots,obsdim-1])
-        self._xy = np.zeros([self.env.num_robots,2])
-        self._theta = np.zeros([self.env.num_robots,1])
+        self._observation = np.zeros([self.env.num_robots,6])
+        self._obs = np.zeros([self.env.num_robots,5])
+        _xy = np.zeros([self.env.num_robots,2])
+        _theta = np.zeros([self.env.num_robots,1])
 
         for robot_id in range(self.env.num_robots):
             xygoal = self.xygoals[robot_id] #robot's goal
-            robot_xytheta = self.env.robot.get_observation(robot_id) #robot returns x y theta
+            robot_xytheta = self.env.robots[robot_id].get_observation() #robot returns x y theta
             self._obs[robot_id] = np.append(robot_xytheta,xygoal)
 
-            self._xy[robot_id] = np.array([robot_xytheta[0:2]])
-            self._theta[robot_id] = robot_xytheta[2]
+            _xy[robot_id] = np.array([robot_xytheta[0:2]])
+            _theta[robot_id] = robot_xytheta[2]
 
         #add distance compute - simulate sensor readings
-        self.obstacles = 1000*np.ones([self.env.num_robots,1])
+        obstacles = 1000*np.ones([self.env.num_robots,1])
         for i in range(self.env.num_robots):
             dist_sensor = obstacles[i]
-            vector2 = np.array([np.sin(self._theta[i]),np.cos(self._theta[i])])
+            vector2 = np.array([np.sin(_theta[i]),np.cos(_theta[i])])
             for j in range(self.env.num_robots):
                 if i == j:
                     continue   
@@ -115,7 +115,7 @@ class TaskModule():
 
                 perp = ss*np.sin(angle)
                 long = ss*np.cos(angle)
-                if (perp < 0.25) and self.obstacles[i] > long and long > 0: #if another robot in front of distance sensor
+                if (perp < 0.25) and obstacles[i] > long and long > 0: #if another robot in front of distance sensor
                     dist_sensor = long - 0.5 #subtract robot dimensions
             
             self._observation[i] = np.append(self._obs[i],dist_sensor)

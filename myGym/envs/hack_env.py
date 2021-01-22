@@ -35,7 +35,7 @@ class HackEnv(CameraEnv):
         self.num_robots = num_robots
         self.robots = []
         self.holes = [[10,10],[15,15]]  # list of coordinates of all holes
-        self.humans = [[30,0]] # list of coordinates of all humans
+        self.humans = [[30,0],[20,0]] # list of coordinates of all humans
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
         self.obs_space = obs_space
@@ -130,10 +130,19 @@ class HackEnv(CameraEnv):
         Returns:
             :return observation: (array) Represented position of task relevant objects
         """
-        return np.zeros((self.num_robots, 6), np.float)
+        #return np.zeros((self.num_robots, 6), np.float) #DEBUG
+        return self.task.get_observation()
 
     def check_collision(self):
         obs_after_actions = self.get_observation()
+        for i in range(self.num_robots):
+            for j in range(self.num_robots):
+                if i == j:
+                    continue   
+                vector1 = obs_after_actions[i][0:2] - obs_after_actions[j][0:2]
+                ss = np.linalg.norm(vector1) #dist between two bots
+                if ss < 0.5: # bots in collision
+                    print('collision')
 
     def step(self, actions):
         """
