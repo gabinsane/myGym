@@ -47,7 +47,7 @@ class HackEnv(CameraEnv):
         self.parcels_done = 0
         self.episode_steps = 0
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
-        super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, )
+        super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
     def _setup_scene(self):
         """
