@@ -170,8 +170,8 @@ class TaskModule():
         Returns:
             :return: (bool)
         """
-        o1 = observation[0:2]
-        o2 = observation[3:5]
+        o1 = observation[:,0:2]
+        o2 = observation[:,3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
         return self.current_norm_distance < self.goal_threshold
 
@@ -212,9 +212,9 @@ class TaskModule():
             :return dist: (float) Distance between 2 float arrays
         """
         if self.distance_type == "euclidean":
-            dist = np.linalg.norm(np.asarray(obj1) - np.asarray(obj2))
+            dist = np.linalg.norm(np.asarray(obj1) - np.asarray(obj2), axis=1)
         elif self.distance_type == "manhattan":
-            dist = cityblock(obj1, obj2)
+            dist = cityblock(obj1, obj2)  # NOT IMPLEMENTED FOR HACK!!
         return dist
 
     def calc_rotation_diff(self, obj1, obj2):

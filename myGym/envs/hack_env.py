@@ -152,10 +152,10 @@ class HackEnv(CameraEnv):
             if goal == 1 and self.robots_states[ix] == 0:
                 self.parcels_done += 1
                 print("Robot {} succeeded! Overall parcels sorted: {}".format(ix, self.parcels_done))
-                self.reward.goal_reached[ix] = 0
+                self.reward.goals_reached[ix] = 0
             elif goal == 1 and self.robots_states[ix] == 1:
                 print("Robot {} picked up parcel".format(ix))
-                self.reward.goal_reached[ix] = 0
+                self.reward.goals_reached[ix] = 0
         return reward
 
     def _apply_action_robot(self, action, robot_idx):

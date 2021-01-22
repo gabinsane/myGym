@@ -75,13 +75,14 @@ class HackReward(Reward):
         o2 = observation[:,3:5]  # goal x, y
         rewards = self.calc_dist_diff(o1, o2)
         rewards_updated = []
+        real_goal_distances = self.task.calc_distance(o1, o2)
         for idx, reward in enumerate(rewards):
-            if observation[idx][3] < self.task.obstacle_threshold:  # if bot too close to obstacle
-                rewards_updated.append(reward * self.collision_punishment_scale)
+            if observation[idx][3] < self.task.obstacle_threshold and real_goal_distances[idx] > self.task.obstacle_threshold:
+                # if bot too close to obstacle and the obstacle is not the goal
+                    rewards_updated.append(reward * self.collision_punishment_scale)
             else:
                 rewards_updated.append(reward)
-        for ix, o in enumerate(observation):
-            self.goal_reached[ix] = 1 if self.task.check_distance_threshold(o) else 0
+        self.goals_reached = self.task.check_distance_threshold(observation).astype(int)
         self.rewards_history.append(np.asarray(rewards_updated))
         return np.asarray(rewards_updated)
 
@@ -108,7 +109,7 @@ class HackReward(Reward):
         self.prev_diff = self.task.calc_distance(self.prev_bot_position, self.prev_goal_position)
 
         current_diff = self.task.calc_distance(bot_position, goal_position)
-        norm_diff = (self.prev_diff - current_diff) / self.prev_diff
+        norm_diff = (self.prev_diff - current_diff) / self.prev_diff if self.prev_diff.any() else (self.prev_diff - current_diff)
         self.prev_bot_position = bot_position
         self.prev_goal_position = goal_position
 
