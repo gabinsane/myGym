@@ -53,13 +53,14 @@ class Reward:
 
 class HackReward(Reward):
 
-    def __init__(self, env, task):
+    def __init__(self, env, task, num_robots):
         super(HackReward, self).__init__(env)
         self.task = task
+        self.num_robots = num_robots
         self.prev_bot_position = None
         self.prev_goal_position = None
         self.collision_punishment_scale = 2  # how much punish collision
-        self.goal_reached = False
+        self.goals_reached = [0] * num_robots
 
     def compute(self, observation):
         """
@@ -70,14 +71,19 @@ class HackReward(Reward):
         Returns:
             :return reward: (float) Reward signal for the environment
         """
-        o1 = observation[0:2]  # bot x, y
-        o2 = observation[3:5]  # goal x, y
-        reward = self.calc_dist_diff(o1, o2)
-        if observation[3] < self.task.obstacle_threshold:  # if bot too close to obstacle
-            reward = reward * self.collision_punishment_scale
-        self.goal_reached = self.task.check_distance_threshold(observation)
-        self.rewards_history.append(reward)
-        return reward
+        o1 = observation[:,0:2]  # bot x, y
+        o2 = observation[:,3:5]  # goal x, y
+        rewards = self.calc_dist_diff(o1, o2)
+        rewards_updated = []
+        for idx, reward in enumerate(rewards):
+            if observation[idx][3] < self.task.obstacle_threshold:  # if bot too close to obstacle
+                rewards_updated.append(reward * self.collision_punishment_scale)
+            else:
+                rewards_updated.append(reward)
+        for ix, o in enumerate(observation):
+            self.goal_reached[ix] = 1 if self.task.check_distance_threshold(o) else 0
+        self.rewards_history.append(np.asarray(rewards_updated))
+        return np.asarray(rewards_updated)
 
     def reset(self):
         """

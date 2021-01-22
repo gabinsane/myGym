@@ -36,7 +36,7 @@ class HackEnv(CameraEnv):
                  ):
 
         self.task = TaskModule(logdir=logdir, env=self)
-        self.reward = HackReward(self, self.task)
+        self.reward = HackReward(self, self.task, num_robots=num_robots)
         self.num_robots = num_robots
         self.obs_space = obs_space
         self.visualize = visualize
@@ -109,7 +109,8 @@ class HackEnv(CameraEnv):
         """
         Add cameras to the environment
         """
-        camera_args = self.workspace_dict[self.workspace]['camera']
+        camera_args = {'position': [[-0.0, 2.1, 1.0], [0.0, -1.7, 1.2], [3.5, -0.6, 1.0], [-3.5, -0.7, 1.0], [-0.0, 2.0, 4.9]],
+                       'target': [[0.0, 0.0, 0.7], [-0.0, 1.3, 0.2], [3.05, -0.2, 0.9], [-2.9, -0.2, 0.9], [-0.0, 2.1, 3.6]]}
         for cam_idx in range(len(camera_args['position'])):
             self.add_camera(position=camera_args['position'][cam_idx], target_position=camera_args['target'][cam_idx], distance=0.001, is_absolute_position=True)
 
@@ -120,8 +121,7 @@ class HackEnv(CameraEnv):
         Returns:
             :return observation: (array) Represented position of task relevant objects
         """
-
-        return np.zeros(6)
+        return np.zeros(self.num_robots, 6)
 
     def step(self, actions):
         """
@@ -139,7 +139,7 @@ class HackEnv(CameraEnv):
             self._apply_action_robot(action, robot_idx)
         self._observation = self.get_observation()
         reward = self.compute_reward(observation=self._observation)
-        self.episode_reward += reward
+        self.episode_reward += np.mean(reward)  # not sure where this is used
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += 0.25
@@ -148,9 +148,14 @@ class HackEnv(CameraEnv):
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
-        if self.reward.goal_reached:
-            self.parcels_done += 1
-            print("Success! Parcels sorted: {}".format(self.parcels_done))
+        for ix, goal in enumerate(self.reward.goals_reached):
+            if goal == 1 and self.robots_states[ix] == 0:
+                self.parcels_done += 1
+                print("Robot {} succeeded! Overall parcels sorted: {}".format(ix, self.parcels_done))
+                self.reward.goal_reached[ix] = 0
+            elif goal == 1 and self.robots_states[ix] == 1:
+                print("Robot {} picked up parcel".format(ix))
+                self.reward.goal_reached[ix] = 0
         return reward
 
     def _apply_action_robot(self, action, robot_idx):
