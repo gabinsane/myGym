@@ -1,6 +1,6 @@
 {
 #Environment
-"env_name":"Gym-v0",
+"env_name":"HackEnv-v0",
 "workspace":"table",
 "engine":"pybullet",
 "render":"opengl",
