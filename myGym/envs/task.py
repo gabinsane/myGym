@@ -167,7 +167,7 @@ class TaskModule():
                 return True
         return False
 
-    def check_distance_threshold(self, observation, idx):
+    def check_distance_threshold(self, observation):
         """
         Check if the distance between relevant task objects is under threshold for successful task completion
 
@@ -178,14 +178,15 @@ class TaskModule():
         o2 = observation[:,3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
         goal_reached = self.current_norm_distance < self.goal_threshold
-        if goal_reached and self.robots_states[idx] == 1: #ready for unloading
-            self.robots_waits[idx] = 1 #wait 1s
-            self.robots_states[idx] = 0 #unload
-            self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
-        elif goal_reached and self.robots_states[idx] == 0: #ready for loading
-            self.robots_waits[idx] = 2 #wait 2s
-            self.robots_states[idx] = 1 #load
-            self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
+        for idx in range(len(goal_reached)): #@TODO matrix intead of for cycle
+            if goal_reached[idx] and self.robots_states[idx] == 1: #ready for unloading
+                self.robots_waits[idx] = 1 #wait 1s
+                self.robots_states[idx] = 0 #unload
+                self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
+            elif goal_reached[idx] and self.robots_states[idx] == 0: #ready for loading
+                self.robots_waits[idx] = 2 #wait 2s
+                self.robots_states[idx] = 1 #load
+                self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
 
         return goal_reached
 

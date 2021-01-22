@@ -45,7 +45,7 @@ class HackEnv(CameraEnv):
         self.episode_steps = 0
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
-        self.timestep = 0.25 #sec
+        self.timestep = 0.125 #sec
         self.holes = [[10,10],[15,15]]  # list of coordinates of all holes
         self.humans = [[30,0]] # list of coordinates of all humans
 
@@ -125,6 +125,9 @@ class HackEnv(CameraEnv):
         """
         return np.zeros((self.num_robots, 6), np.float)
 
+    def check_collision(self):
+        obs_after_actions = self.get_observation()
+
     def step(self, actions):
         """
         Environment step in simulation
@@ -142,6 +145,7 @@ class HackEnv(CameraEnv):
                 self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
             else:
                 self._apply_action_robot(action, robot_idx) #if not waiting, apply action
+        self.check_collision()
         self._observation = self.get_observation()
         reward = self.compute_reward(observation=self._observation)
         self.episode_reward += np.mean(reward)  # not sure where this is used
