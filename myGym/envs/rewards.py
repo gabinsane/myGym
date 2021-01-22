@@ -75,7 +75,7 @@ class HackReward(Reward):
         reward = self.calc_dist_diff(o1, o2)
         if observation[3] < self.task.obstacle_threshold:  # if bot too close to obstacle
             reward = reward * self.collision_punishment_scale
-        self.goal_reached = self.check_goal_threshold(o1, o2)
+        self.goal_reached = self.task.check_distance_threshold(observation)
         self.rewards_history.append(reward)
         return reward
 
@@ -99,25 +99,14 @@ class HackReward(Reward):
         if self.prev_bot_position is None and self.prev_goal_position is None:
             self.prev_bot_position = bot_position
             self.prev_goal_position = goal_position
-        self.prev_diff = np.linalg.norm(np.asarray(self.prev_bot_position) - np.asarray(self.prev_goal_position))
+        self.prev_diff = self.task.calc_distance(self.prev_bot_position, self.prev_goal_position)
 
-        current_diff = np.linalg.norm(np.asarray(bot_position) - np.asarray(goal_position))
+        current_diff = self.task.calc_distance(bot_position, goal_position)
         norm_diff = (self.prev_diff - current_diff) / self.prev_diff
         self.prev_bot_position = bot_position
         self.prev_goal_position = goal_position
 
         return norm_diff
-
-    def check_goal_threshold(self, o1, o2):
-        """
-        Check if the distance between relevant task objects is under threshold for successful task completion
-
-        Returns:
-            :return: (bool)
-        """
-        self.current_norm_distance = np.linalg.norm(np.asarray(o1) - np.asarray(o2))
-        return self.current_norm_distance < self.task.goal_threshold
-
 
 class DistanceReward(Reward):
     """
