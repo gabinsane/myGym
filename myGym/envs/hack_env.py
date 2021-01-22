@@ -38,13 +38,17 @@ class HackEnv(GymEnv):
         """
         Set-up environment scene. Load static objects, apply textures. Load robot.
         """
+        #@TODO Nikita
         pass
 
     def _set_observation_space(self):
         """
         Set observation space type, dimensions and range
         """
-        pass
+        observationDim = self.task.obsdim
+        observation_high = np.array([100] * observationDim)
+        self.observation_space = spaces.Box(-observation_high,
+                                            observation_high)
 
     def _set_action_space(self):
         """
@@ -62,8 +66,12 @@ class HackEnv(GymEnv):
             :return self._observation: (list) Observation data of the environment
         """
         super().reset(hard=hard)
-
-        pass
+        self.robot.reset()
+        self.task.reset_task()
+        self.reward.reset()
+        self.p.stepSimulation()
+        self._observation = self.get_observation()
+        return self._observation
 
     def _set_cameras(self):
         """
@@ -97,7 +105,6 @@ class HackEnv(GymEnv):
         pass
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        #@TODO: Reward computation for HER, argument for .compute()
         reward = self.reward.compute(np.append(achieved_goal, desired_goal))
         return reward
 
