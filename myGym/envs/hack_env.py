@@ -35,9 +35,9 @@ class HackEnv(CameraEnv):
                  gui_on=0
                  ):
 
+        self.num_robots = num_robots
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
-        self.num_robots = num_robots
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
@@ -72,7 +72,7 @@ class HackEnv(CameraEnv):
         Set observation space type, dimensions and range
         """
         observationDim = self.task.obsdim
-        observation_high = np.array([100] * observationDim)
+        observation_high = np.full(observationDim, 100)
         self.observation_space = spaces.Box(-observation_high,
                                             observation_high)
 
@@ -121,7 +121,7 @@ class HackEnv(CameraEnv):
         Returns:
             :return observation: (array) Represented position of task relevant objects
         """
-        return np.zeros(self.num_robots, 6)
+        return np.zeros((self.num_robots, 6), np.float)
 
     def step(self, actions):
         """

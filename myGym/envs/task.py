@@ -42,7 +42,7 @@ class TaskModule():
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
         self.obstacle_threshold = 0.15  # considered as collision
 
-        self.obsdim = 6
+        self.obsdim = (self.env.num_robots, 6)
 
     def reset_task(self):
         """
@@ -51,12 +51,6 @@ class TaskModule():
         self.last_distance = None
         self.init_distance = None
         self.current_norm_distance = None
-        self.vision_module.mask = {}
-        self.vision_module.centroid = {}
-        self.vision_module.centroid_transformed = {}
-        self.env.task_objects.append(self.env.robot)
-        if self.reward_type == '2dvu':
-            self.generate_new_goal(self.env.objects_area_boarders, self.env.active_cameras)
 
     def render_images(self):
         render_info = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)
