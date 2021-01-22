@@ -38,22 +38,11 @@ class TaskModule():
         self.current_norm_distance = None
         self.stored_observation = []
         self.fig = None
-        self.threshold = 0.1 # distance threshold for successful task completion
-        self.obsdim = (len(env.task_objects_names) + 1) * 3
-        if self.reward_type == 'gt':
-            src = 'ground_truth'
-        elif self.reward_type == '3dvs':
-            src = 'yolact'
-        elif self.reward_type == '2dvu':
-            src = 'vae'
-        elif self.reward_type == '6dvs':
-            src = 'dope'
-            self.obsdim += 6
-        else:
-            raise Exception("You need to provide valid reward type.")
-        self.vision_module = VisionModule(vision_src=src, env=env, vae_path=vae_path, yolact_path=yolact_path, yolact_config=yolact_config)
-        if src == "vae":
-            self.obsdim = self.vision_module.obsdim
+
+        self.goal_threshold = 0.1  # goal reached, robot unloads parcel
+        self.obstacle_threshold = 0.15  # considered as collision
+
+        self.obsdim = 6
 
     def reset_task(self):
         """
@@ -98,19 +87,13 @@ class TaskModule():
         Returns:
             :return self._observation: (array) Task relevant observation data, positions of task objects 
         """
-        obj_positions, obj_orientations = [], []
-        self.render_images() if self.reward_type != "gt" else None
-        if self.reward_type == '2dvu':
-            obj_positions, recons = (self.vision_module.encode_with_vae(imgs=[self.image, self.goal_image], task=self.task_type, decode=self.env.visualize))
-            obj_positions.append(list(self.env.robot.get_position()))
-            self.visualize_2dvu(recons) if self.env.visualize == 1 else None
-        else:
-            for env_object in self.env.task_objects:
-                obj_positions.append(self.vision_module.get_obj_position(env_object,self.image,self.depth))
-                if self.reward_type == '6dvs' and self.task_type != 'reach' and env_object != self.env.task_objects[-1]:
-                    obj_orientations.append(self.vision_module.get_obj_orientation(env_object,self.image))
-        obj_positions[len(obj_orientations):len(obj_orientations)] = obj_orientations
-        self._observation = np.array(sum(obj_positions, []))
+        self._observation = []
+        for robot_id in range(1,len(self.robots)):
+            xygoal = self.xygoals[robot_id] #robot's goal
+            robot_xytheta = self.env.robot.get_data(robot_id) #robot returns x y theta
+            self._observation[robot_id].append(robot_xytheta,xygoal)
+
+        #add distance compute
         return self._observation
 
     def check_vision_failure(self):
@@ -166,11 +149,10 @@ class TaskModule():
         Returns:
             :return: (bool)
         """
-        observation = observation["observation"] if isinstance(observation, dict) else observation
-        o1 = observation[0:int(len(observation[:-3])/2)] if self.reward_type == "2dvu" else observation[0:3]
-        o2 = observation[int(len(observation[:-3])/2):-3]if self.reward_type == "2dvu" else observation[3:6]
+        o1 = observation[0:2]
+        o2 = observation[3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
-        return self.current_norm_distance < self.threshold
+        return self.current_norm_distance < self.goal_threshold
 
     def check_goal(self):
         """

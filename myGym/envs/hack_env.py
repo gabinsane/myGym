@@ -26,13 +26,14 @@ class HackEnv(GymEnv):
                  ):
 
         self.task = None
-        #self.reward = HackReward(self.env)
+        self.reward = HackReward(self.env, self.task)
 
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
         self.logdir = logdir
-        self.global_shift = [30,30,0]
+        self.time_counter = 0
+        self.parcels_done = 0
         super(HackEnv, self).__init__(active_cameras=active_cameras, **kwargs)
 
     def _setup_scene(self):
@@ -55,7 +56,10 @@ class HackEnv(GymEnv):
         """
         Set observation space type, dimensions and range
         """
-        pass
+        observationDim = self.task.obsdim
+        observation_high = np.array([100] * observationDim)
+        self.observation_space = spaces.Box(-observation_high,
+                                            observation_high)
 
     def _set_action_space(self):
         """
@@ -75,9 +79,15 @@ class HackEnv(GymEnv):
         Returns:
             :return self._observation: (list) Observation data of the environment
         """
-        #super().reset(hard=hard)
-
-        pass
+        super().reset(hard=hard)
+        self.robot.reset()
+        self.task.reset_task()
+        self.reward.reset()
+        self.p.stepSimulation()
+        self.parcels_done = 0
+        self.time_counter = 0
+        self._observation = self.get_observation()
+        return self._observation
 
     def _set_cameras(self):
         """
@@ -96,7 +106,7 @@ class HackEnv(GymEnv):
         """
         pass
 
-    def step(self, action):
+    def step(self, actions):
         """
         Environment step in simulation
 
@@ -108,14 +118,24 @@ class HackEnv(GymEnv):
             :return done: (bool) Whether this stop is episode's final
             :return info: (dict) Additional information about step
         """
-        return None, None, None, None
+        for robot_idx, action in enumerate(actions):
+            self._apply_action_robot(action, robot_idx)
+        self._observation = self.get_observation()
+        reward = self.compute_reward(observation=self._observation)
+        self.episode_reward += reward
+        #info = {'d': self.task.last_distance / self.task.init_distance,
+        #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
+        self.time_counter += 0.25
+        return self._observation, reward
 
-    def compute_reward(self, achieved_goal, desired_goal, info):
-        #@TODO: Reward computation for HER, argument for .compute()
-        reward = self.reward.compute(np.append(achieved_goal, desired_goal))
+    def compute_reward(self, observation):
+        reward = self.reward.compute(observation)
+        if self.reward.goal_reached:
+            self.parcels_done += 1
+            print("Success! Parcels sorted: {}".format(self.parcels_done))
         return reward
 
-    def _apply_action_robot(self, action):
+    def _apply_action_robot(self, action, robot_idx):
         """
         Apply desired action to robot in simulation
 
