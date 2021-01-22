@@ -15,7 +15,7 @@ class HackRobot:
 
     """
     def __init__(self,
-                 position=[-0.1, 0, 0.07], orientation=[0, 0, 0],
+                 position=[-0.1, 0, 0.07], orientation=0,
                  dimension_velocity = 0.5,
                  max_velocity = 10.,
                  max_force = 500.,
@@ -23,13 +23,15 @@ class HackRobot:
 
         self.p = pybullet_client
 
-        self.robot_path = "envs/objects/assembly/urdf/cube_holes.urdf"
+        self.robot_path = "envs/objects/hack_objects/cylinder.urdf"
         self.position = np.array(position)
-        self.orientation = np.array(orientation)
-        self.orientation = self.p.getQuaternionFromEuler(self.orientation)
+        #self.orientation = np.array(orientation)
+        #self.orientation = self.p.getQuaternionFromEuler(self.orientation)
+        self.theta = orientation
 
         self.max_velocity = max_velocity
         self.max_force = max_force
+        self.step_size = 0.01
 
 
         self._load_robot()
@@ -45,12 +47,12 @@ class HackRobot:
                                                 self.robot_path))
             self.robot_uid = objects[0]
             self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
-                                              self.orientation)
+                                              self.p.getQuaternionFromEuler([0,0,self.theta]))
         else:
             self.robot_uid = self.p.loadURDF(
                 pkg_resources.resource_filename("myGym",
                                                 self.robot_path),
-                self.position, self.orientation, useFixedBase=True, flags=(self.p.URDF_USE_SELF_COLLISION))
+                self.position, self.p.getQuaternionFromEuler([0,0,self.theta]), useFixedBase=True, flags=(self.p.URDF_USE_SELF_COLLISION))
 
 
     def reset(self, random_robot=False):
@@ -90,13 +92,7 @@ class HackRobot:
         Returns:
             :return observation: (list) Position of end-effector link (center of mass)
         """
-        observation = []
-        state = self.p.getLinkState(self.robot_uid, self.end_effector_index)
-        pos = state[0]
-        orn = self.p.getEulerFromQuaternion(state[1])
-
-        observation.extend(list(pos))
-        return observation
+        return np.append(self.position[:2], self.theta)
 
     def get_position(self):
         """
@@ -105,7 +101,7 @@ class HackRobot:
         Returns:
             :return position: (list) Position of end-effector link (center of mass)
         """
-        return self.p.getLinkState(self.robot_uid, self.end_effector_index)[0]
+        return self.p.getBasePositionAndOrientation(self.robot_uid)[0]
 
 
     def apply_action(self, action):
@@ -115,4 +111,13 @@ class HackRobot:
         Parameters:
             :param action: (list) Desired action data
         """
-        pass
+        self.theta = action[0]
+        action_type = np.rint(action[1])
+        max_velocity = action[2]
+        dx = action_type * max_velocity * self.step_size * np.sin(self.theta)
+        dy = action_type * max_velocity * self.step_size * np.cos(self.theta)
+
+        self.position = np.add(self.position, [dx, dy, 0])
+
+        self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
+                                         self.p.getQuaternionFromEuler([0,0,self.theta]))
