@@ -158,11 +158,11 @@ class HackEnv(CameraEnv):
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
         for ix, goal in enumerate(self.reward.goals_reached):
-            if goal == 1 and self.robots_states[ix] == 0:
+            if goal == 1 and self.robots_states[ix] == 1:
                 self.parcels_done += 1
                 print("Robot {} succeeded! Overall parcels sorted: {}".format(ix, self.parcels_done))
                 self.reward.goals_reached[ix] = 0
-            elif goal == 1 and self.robots_states[ix] == 1:
+            elif goal == 1 and self.robots_states[ix] == 0:
                 print("Robot {} picked up parcel".format(ix))
                 self.reward.goals_reached[ix] = 0
         return reward
