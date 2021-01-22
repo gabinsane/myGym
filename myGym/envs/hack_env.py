@@ -33,12 +33,9 @@ class HackEnv(CameraEnv):
                  ):
 
         self.num_robots = num_robots
-<<<<<<< HEAD
         self.robots = []
-=======
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
->>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
@@ -79,14 +76,8 @@ class HackEnv(CameraEnv):
         """
         Set observation space type, dimensions and range
         """
-<<<<<<< HEAD
-        # TODO: set dimension
-        observationDim = 6
-        observation_high = np.array([100] * observationDim)
-=======
         observationDim = self.task.obsdim
         observation_high = np.full(observationDim, 100)
->>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
         self.observation_space = spaces.Box(-observation_high,
                                             observation_high)
 
@@ -126,14 +117,10 @@ class HackEnv(CameraEnv):
         """
         Add cameras to the environment
         """
-<<<<<<< HEAD
-        pass
-=======
         camera_args = {'position': [[-0.0, 2.1, 1.0], [0.0, -1.7, 1.2], [3.5, -0.6, 1.0], [-3.5, -0.7, 1.0], [-0.0, 2.0, 4.9]],
                        'target': [[0.0, 0.0, 0.7], [-0.0, 1.3, 0.2], [3.05, -0.2, 0.9], [-2.9, -0.2, 0.9], [-0.0, 2.1, 3.6]]}
         for cam_idx in range(len(camera_args['position'])):
             self.add_camera(position=camera_args['position'][cam_idx], target_position=camera_args['target'][cam_idx], distance=0.001, is_absolute_position=True)
->>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
 
     def get_observation(self):
         """
@@ -163,22 +150,13 @@ class HackEnv(CameraEnv):
             else:
                 self._apply_action_robot(action, robot_idx) #if not waiting, apply action
         self._observation = self.get_observation()
-<<<<<<< HEAD
-        reward = 0 #self.compute_reward(observation=self._observation)
-        self.episode_reward += reward
-        #info = {'d': self.task.last_distance / self.task.init_distance,
-        #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
-        self.time_counter += 0.25
-        return self._observation, reward, None, None
-=======
-        reward = self.compute_reward(observation=self._observation)
+        reward = 0 # TODO: fix self.compute_reward(observation=self._observation)
         self.episode_reward += np.mean(reward)  # not sure where this is used
         #info = {'d': self.task.last_distance / self.task.init_distance,
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += self.timestep
         self.episode_steps += 1
-        return self._observation, reward
->>>>>>> 0182f88e1eb44ed92a2fd1913527a184346e6f67
+        return self._observation, reward, None, None
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
