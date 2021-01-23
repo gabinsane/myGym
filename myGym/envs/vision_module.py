@@ -11,12 +11,7 @@ currentdir = pkg_resources.resource_filename("myGym", "envs")
 
 # import vision models YOLACT, VAE
 sys.path.append(pkg_resources.resource_filename("myGym", "yolact_vision")) #may be moved somewhere else
-try:
-    from inference_tool import InfTool
-except:
-    print("Problem importing YOLACT.")
-from myGym.vae.vis_helpers import load_checkpoint
-from myGym.vae import  sample
+
 
 class VisionModule:
     """
