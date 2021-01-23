@@ -57,8 +57,8 @@ class BaseEnv(gym.Env):
         self.episode_info = ""
 
         # Set general params
-        #self.time_step = 1. / 240.
-        self.time_step = timestep
+        self.time_step = 1. / 240.
+        #self.time_step = timestep
         self.urdf_root = pybullet_data.getDataPath()
         self.observation = {}
 

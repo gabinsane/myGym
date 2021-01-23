@@ -34,7 +34,7 @@ class HackRobot:
 
         self.max_velocity = max_velocity
         self.max_force = max_force
-        self.step_size = 0.01
+        self.step_size = 0.03
 
 
         self._load_robot()
@@ -55,7 +55,7 @@ class HackRobot:
             self.robot_uid = self.p.loadURDF(
                 pkg_resources.resource_filename("myGym",
                                                 self.robot_path),
-                self.position, self.p.getQuaternionFromEuler([0,0,self.theta]), useFixedBase=True, flags=(self.p.URDF_USE_SELF_COLLISION))
+                self.position, self.p.getQuaternionFromEuler([0,0,self.theta]), useFixedBase=False, flags=(self.p.URDF_USE_SELF_COLLISION))
 
 
     def reset(self, random_robot=False):
@@ -133,9 +133,8 @@ class HackRobot:
             :param action: (list) Desired action data
         """
 
-        time.sleep(0.02)
+        #time.sleep(0.02)
         pybullet.resetBaseVelocity(
             self.robot_uid,
-            [action[0], action[1]],
-            [0, 0, action[2]],
-            physicsClientId=self.p)
+            [action[0], action[1], 0],
+            [0, 0, action[2]])

@@ -86,8 +86,8 @@ def test_model(env, model=None, implemented_combos=None, arg_dict=None, model_lo
                 image = render_info[arg_dict["camera"]]["image"]
                 images.append(image)
                 print(f"appending image: total size: {len(images)}]")
-            else:
-                time.sleep(0.02)
+            #else:
+                #time.sleep(0.02)
 
         success_episodes_num += is_successful
         distance_error_sum += distance_error

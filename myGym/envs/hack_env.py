@@ -35,29 +35,29 @@ class HackEnv(CameraEnv):
         self.num_robots = num_robots
         self.robots = []
         self.field_length = 0.75
-        self.holes = self.make_holes_layout()[:50]  # list of coordinates of all holes
-        self.humans = [[25,0],[29,0],[33,0],[37,0],[41,0]] # list of coordinates of all humans
+        self.holes = self.make_holes_layout()  # list of coordinates of all holes
+        self.humans = [[-8, 25],[-4, 25],[0, 25],[4, 25],[8, 25]] # list of coordinates of all humans
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
         self.obs_space = obs_space
         self.visualize = visualize
         self.visgym = visgym
         self.logdir = logdir
-        self.global_shift = [30,30,0]
+        self.global_shift = [0,0,0]
         self.time_counter = 0
         self.parcels_done = 0
         self.episode_steps = 0
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
-        self.timestep = 0.125 #sec
+        self.timestep = 0.0125 #sec
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
     def make_holes_layout(self):
         coord_list = []
-        rowposes = list(range(1,82)[0::3])
-        rowposes2 = list(range(0,82)[0::3])
-        colposes = list(range(5,42)[0::4])
-        colposes2 = list(range(3,42)[0::4])
+        rowposes = list(range(-20,20)[0::3])
+        rowposes2 = list(range(-20,20)[0::3])
+        colposes = list(range(-20,20)[0::4])
+        colposes2 = list(range(-20,20)[0::4])
         for ix, num in enumerate(rowposes):
             for ixx, num2 in enumerate(colposes):
                 coord_list.append([num, num2])
@@ -87,7 +87,7 @@ class HackEnv(CameraEnv):
                           [coords[0]*self.field_length,coords[1]*self.field_length,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "hole{}".format(ix))
 
         for robot_id in range(self.num_robots):
-            self.robots.append(HackRobot(position = [6.8+robot_id*0.75, 0, 0], timestep = self.timestep, pybullet_client=self.p))
+            self.robots.append(HackRobot(position = [-19 * self.field_length + (robot_id*self.field_length // 7) * 4,-19 * self.field_length + (robot_id*self.field_length % 7) * 4, 0], timestep = self.timestep, pybullet_client=self.p))
 
         for ix, coords in enumerate(self.humans):
             self._add_scene_object_uid(self.p.loadURDF(
@@ -110,8 +110,8 @@ class HackEnv(CameraEnv):
         Set action space dimensions and range
         """
         action_dim = 2
-        self.action_low = np.tile([-np.pi, -1],1)
-        self.action_high = np.tile([np.pi, 1], 1)
+        self.action_low = np.tile([-np.pi, -1], self.num_robots)
+        self.action_high = np.tile([np.pi, 1], self.num_robots)
         self.action_space = spaces.Box(self.action_low, self.action_high)
 
 
