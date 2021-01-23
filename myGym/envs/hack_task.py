@@ -38,22 +38,12 @@ class TaskModule():
         self.current_norm_distance = None
         self.stored_observation = []
         self.fig = None
-        self.threshold = 0.1 # distance threshold for successful task completion
-        self.obsdim = (len(env.task_objects_names) + 1) * 3
-        if self.reward_type == 'gt':
-            src = 'ground_truth'
-        elif self.reward_type == '3dvs':
-            src = 'yolact'
-        elif self.reward_type == '2dvu':
-            src = 'vae'
-        elif self.reward_type == '6dvs':
-            src = 'dope'
-            self.obsdim += 6
-        else:
-            raise Exception("You need to provide valid reward type.")
-        self.vision_module = VisionModule(vision_src=src, env=env, vae_path=vae_path, yolact_path=yolact_path, yolact_config=yolact_config)
-        if src == "vae":
-            self.obsdim = self.vision_module.obsdim
+        self.xygoals = [self.env.humans[0]]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
+
+        self.goal_threshold = 0.1  # goal reached, robot unloads parcel
+        self.obstacle_threshold = 0.15  # considered as collision
+
+        self.obsdim = (self.env.num_robots, 6)
 
     def reset_task(self):
         """
@@ -62,12 +52,10 @@ class TaskModule():
         self.last_distance = None
         self.init_distance = None
         self.current_norm_distance = None
-        self.vision_module.mask = {}
-        self.vision_module.centroid = {}
-        self.vision_module.centroid_transformed = {}
-        self.env.task_objects.append(self.env.robot)
-        if self.reward_type == '2dvu':
-            self.generate_new_goal(self.env.objects_area_boarders, self.env.active_cameras)
+
+        self.xygoals = [self.env.humans[0]]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
+        self.env.robots_states = [0] * self.env.num_robots  # 0 for unloaded, 1 for loaded
+        self.env.robots_waits = [2] * self.env.num_robots  # num steps to wait (loading)
 
     def render_images(self):
         render_info = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)
@@ -98,19 +86,40 @@ class TaskModule():
         Returns:
             :return self._observation: (array) Task relevant observation data, positions of task objects 
         """
-        obj_positions, obj_orientations = [], []
-        self.render_images() if self.reward_type != "gt" else None
-        if self.reward_type == '2dvu':
-            obj_positions, recons = (self.vision_module.encode_with_vae(imgs=[self.image, self.goal_image], task=self.task_type, decode=self.env.visualize))
-            obj_positions.append(list(self.env.robot.get_position()))
-            self.visualize_2dvu(recons) if self.env.visualize == 1 else None
-        else:
-            for env_object in self.env.task_objects:
-                obj_positions.append(self.vision_module.get_obj_position(env_object,self.image,self.depth))
-                if self.reward_type == '6dvs' and self.task_type != 'reach' and env_object != self.env.task_objects[-1]:
-                    obj_orientations.append(self.vision_module.get_obj_orientation(env_object,self.image))
-        obj_positions[len(obj_orientations):len(obj_orientations)] = obj_orientations
-        self._observation = np.array(sum(obj_positions, []))
+        self._observation = np.zeros([self.env.num_robots,6])
+        self._obs = np.zeros([self.env.num_robots,5])
+        _xy = np.zeros([self.env.num_robots,2])
+        _theta = np.zeros([self.env.num_robots,1])
+
+        for robot_id in range(self.env.num_robots):
+            xygoal = self.xygoals[robot_id] #robot's goal
+            robot_xytheta = self.env.robots[robot_id].get_observation() #robot returns x y theta
+            self._obs[robot_id] = np.append(robot_xytheta,xygoal)
+
+            _xy[robot_id] = np.array([robot_xytheta[0:2]])
+            _theta[robot_id] = robot_xytheta[2]
+
+        #add distance compute - simulate sensor readings
+        obstacles = 1000*np.ones([self.env.num_robots,1])
+        for i in range(self.env.num_robots):
+            dist_sensor = obstacles[i]
+            vector2 = np.array([np.sin(_theta[i]),np.cos(_theta[i])])
+            for j in range(self.env.num_robots):
+                if i == j:
+                    continue   
+                vector1 = _xy[i] - _xy[j]
+                ss = np.linalg.norm(vector1)
+                
+                dot_product = (np.dot(vector1, vector2)) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
+                angle = np.arccos(dot_product)
+
+                perp = ss*np.sin(angle)
+                long = ss*np.cos(angle)
+                if (perp < 0.25) and obstacles[i] > long and long > 0: #if another robot in front of distance sensor
+                    dist_sensor = long - 0.5 #subtract robot dimensions
+            
+            self._observation[i] = np.append(self._obs[i],dist_sensor)
+
         return self._observation
 
     def check_vision_failure(self):
@@ -166,11 +175,21 @@ class TaskModule():
         Returns:
             :return: (bool)
         """
-        observation = observation["observation"] if isinstance(observation, dict) else observation
-        o1 = observation[0:int(len(observation[:-3])/2)] if self.reward_type == "2dvu" else observation[0:3]
-        o2 = observation[int(len(observation[:-3])/2):-3]if self.reward_type == "2dvu" else observation[3:6]
+        o1 = observation[:,0:2]
+        o2 = observation[:,3:5]
         self.current_norm_distance = self.calc_distance(o1, o2)
-        return self.current_norm_distance < self.threshold
+        goal_reached = self.current_norm_distance < self.goal_threshold
+        for idx in range(len(goal_reached)): #@TODO matrix intead of for cycle
+            if goal_reached[idx] and self.env.robots_states[idx] == 1: #ready for unloading
+                self.env.robots_waits[idx] = 1 #wait 1s
+                self.env.robots_states[idx] = 0 #unload
+                self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
+            elif goal_reached[idx] and self.env.robots_states[idx] == 0: #ready for loading
+                self.env.robots_waits[idx] = 2 #wait 2s
+                self.env.robots_states[idx] = 1 #load
+                self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
+
+        return goal_reached
 
     def check_goal(self):
         """
@@ -209,9 +228,9 @@ class TaskModule():
             :return dist: (float) Distance between 2 float arrays
         """
         if self.distance_type == "euclidean":
-            dist = np.linalg.norm(np.asarray(obj1) - np.asarray(obj2))
+            dist = np.linalg.norm(np.asarray(obj1) - np.asarray(obj2), axis=1)
         elif self.distance_type == "manhattan":
-            dist = cityblock(obj1, obj2)
+            dist = cityblock(obj1, obj2)  # NOT IMPLEMENTED FOR HACK!!
         return dist
 
     def calc_rotation_diff(self, obj1, obj2):
@@ -230,7 +249,7 @@ class TaskModule():
             diff = cityblock(obj1, obj2)
         return diff
 
-    def generate_new_goal(self, object_area_borders, camera_id):
+    def generate_new_goal(self, goal_list):
         """
         Generate an image of new goal for VEA vision model. This function is supposed to be called from env workspace.
         
@@ -238,24 +257,5 @@ class TaskModule():
             :param object_area_borders: (list) Volume in space where task objects can be located
             :param camera_id: (int) ID of environment camera active for image rendering
         """
-        if self.task_type == "push":
-            random_pos = self.env.task_objects[0].get_random_object_position(object_area_borders)
-            random_rot = self.env.task_objects[0].get_random_object_orientation()
-            self.env.robot.reset_up()
-            self.env.task_objects[0].set_position(random_pos)
-            self.env.task_objects[0].set_orientation(random_rot)
-            self.env.task_objects[1].set_position(random_pos)
-            self.env.task_objects[1].set_orientation(random_rot)
-            render_info = self.env.render(mode="rgb_array", camera_id = self.env.active_cameras)
-            self.goal_image = render_info[self.env.active_cameras]["image"]
-            random_pos = self.env.task_objects[0].get_random_object_position(object_area_borders)
-            random_rot = self.env.task_objects[0].get_random_object_orientation()
-            self.env.task_objects[0].set_position(random_pos)
-            self.env.task_objects[0].set_orientation(random_rot)
-        elif self.task_type == "reach":
-            bounded_action = [random.uniform(-3,-2.4) for x in range(2)]
-            action = [random.uniform(-2.9,2.9) for x in range(6)]
-            self.env.robot.reset_joints(bounded_action + action)
-            self.goal_image  = self.env.render(mode="rgb_array", camera_id=self.env.active_cameras)[self.env.active_cameras]['image']
-            self.env.robot.reset_up()
-            #self.goal_image = self.vision_module.vae_generate_sample()
+        return random.choice(goal_list)
+

@@ -1,7 +1,7 @@
 from myGym.envs.base_env import CameraEnv
 from myGym.envs.rewards import HackReward
 from myGym.envs.hack_robot import HackRobot
-from myGym.envs.task import TaskModule
+from myGym.envs.hack_task import TaskModule
 from myGym.envs.base_env import CameraEnv
 import pybullet
 import time
