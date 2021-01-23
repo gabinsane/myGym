@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import typing
 from typing import Union, Optional, Any
-
+from gym import spaces
 import gym
 import numpy as np
 
@@ -27,8 +27,9 @@ class AbstractEnvRunner(ABC):
         self.model = model
         n_envs = env.num_envs
         self.batch_ob_shape = (n_envs * n_steps,) + env.observation_space.shape
-        self.obs = np.zeros((n_envs,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
-        self.obs[:] = env.reset()
+        self.obs = np.zeros((n_envs,) +env.envs[0].real_obsspace.shape, dtype=env.observation_space.dtype.name)
+        self.obs[:] = env.envs[0].reset().reshape(1, -1)
+        self.obs = self.obs.reshape(self.env.envs[0].num_robots, -1)
         self.n_steps = n_steps
         self.states = model.initial_state
         self.dones = [False for _ in range(n_envs)]

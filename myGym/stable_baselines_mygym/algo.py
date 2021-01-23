@@ -469,17 +469,20 @@ class Runner(AbstractEnvRunner):
         mb_states = self.states
         ep_infos = []
         for _ in range(self.n_steps):
-            actions, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones)
-            mb_obs.append(self.obs.copy())
-            mb_actions.append(actions)
-            mb_values.append(values)
-            mb_neglogpacs.append(neglogpacs)
-            mb_dones.append(self.dones)
-            clipped_actions = actions
-            # Clip the actions to avoid out of bound error
-            if isinstance(self.env.action_space, gym.spaces.Box):
-                clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
-            self.obs[:], rewards, self.dones, infos = self.env.step(clipped_actions)
+            actions = []
+            for ob in self.obs.reshape(self.env.envs[0].num_robots, -1):
+                action, values, self.states, neglogpacs = self.model.step(ob, self.states, self.dones)
+                mb_obs.append(self.obs.copy())
+                mb_actions.append(action)
+                mb_values.append(values)
+                mb_neglogpacs.append(neglogpacs)
+                mb_dones.append(self.dones)
+                clipped_actions = action
+                # Clip the actions to avoid out of bound error
+                if isinstance(self.env.action_space, gym.spaces.Box):
+                    clipped_actions = np.clip(action, self.env.action_space.low, self.env.action_space.high)
+                actions.append(clipped_actions[0])
+            self.obs, rewards, self.dones, infos = self.env.envs[0].step(np.asarray(actions))
 
             self.model.num_timesteps += self.n_envs
 
@@ -491,10 +494,10 @@ class Runner(AbstractEnvRunner):
                     # Return dummy values
                     return [None] * 9
 
-            for info in infos:
-                maybe_ep_info = info.get('episode')
-                if maybe_ep_info is not None:
-                    ep_infos.append(maybe_ep_info)
+            # for info in infos:
+            #     maybe_ep_info = info.get('episode')
+            #     if maybe_ep_info is not None:
+            #         ep_infos.append(maybe_ep_info)
             mb_rewards.append(rewards)
         # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)

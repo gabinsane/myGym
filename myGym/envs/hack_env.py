@@ -103,6 +103,7 @@ class HackEnv(CameraEnv):
         observation_high = np.array([100] * observationDim)
         self.observation_space = spaces.Box(-observation_high,
                                             observation_high)
+        self.real_obsspace = spaces.Box(- np.array([100] * (6 * self.num_robots)), np.array([100] * (6 * self.num_robots)))
 
     def _set_action_space(self):
         """
@@ -178,8 +179,6 @@ class HackEnv(CameraEnv):
         """
         done = False
         actions_res = actions.reshape(-1,2)
-        if actions_res.shape[0] == 100:
-            print(bulls)
         for robot_idx, action in enumerate(actions_res):
             if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
                 self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
