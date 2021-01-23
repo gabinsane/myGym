@@ -109,8 +109,8 @@ class HackEnv(CameraEnv):
         Set action space dimensions and range
         """
         action_dim = 2
-        self.action_low = np.tile([-np.pi, -1],action_dim)
-        self.action_high = np.tile([np.pi, 1], action_dim)
+        self.action_low = np.tile([-np.pi, -1],1)
+        self.action_high = np.tile([np.pi, 1], 1)
         self.action_space = spaces.Box(self.action_low, self.action_high)
 
 
