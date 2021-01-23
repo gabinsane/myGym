@@ -7,9 +7,9 @@ import json, commentjson
 import gym
 from myGym import envs
 import myGym.utils.cfg_comparator as cfg
-from stable_baselines.common.policies import MlpPolicy
-from stable_baselines.common import make_vec_env
-from stable_baselines.common.vec_env import DummyVecEnv
+from myGym.stable_baselines_mygym.common.policies import MlpPolicy
+from myGym.stable_baselines_mygym.common import make_vec_env
+from myGym.stable_baselines_mygym.common.vec_env import DummyVecEnv
 from stable_baselines.bench import Monitor
 from stable_baselines import results_plotter
 from stable_baselines.her import GoalSelectionStrategy, HERGoalEnvWrapper

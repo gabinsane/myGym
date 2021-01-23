@@ -5,11 +5,11 @@ import numpy as np
 import tensorflow as tf
 
 from stable_baselines import logger
-from stable_baselines.common import explained_variance, ActorCriticRLModel, tf_util, SetVerbosity, TensorboardWriter
-from stable_baselines.common.runners import AbstractEnvRunner
-from stable_baselines.common.schedules import get_schedule_fn
-from stable_baselines.common.tf_util import total_episode_reward_logger
-from stable_baselines.common.math_util import safe_mean
+from myGym.stable_baselines_mygym.common import explained_variance, ActorCriticRLModel, tf_util, SetVerbosity, TensorboardWriter
+from myGym.stable_baselines_mygym.common.runners import AbstractEnvRunner
+from myGym.stable_baselines_mygym.common.schedules import get_schedule_fn
+from myGym.stable_baselines_mygym.common.tf_util import total_episode_reward_logger
+from myGym.stable_baselines_mygym.common.math_util import safe_mean
 from myGym.stable_baselines_mygym.policies import ActorCriticPolicy, RecurrentActorCriticPolicy
 
 

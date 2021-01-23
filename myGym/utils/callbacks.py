@@ -1,5 +1,5 @@
 from stable_baselines.results_plotter import load_results, ts2xy
-from stable_baselines.common.callbacks import BaseCallback, EvalCallback
+from myGym.stable_baselines_mygym.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines import results_plotter
 
 import os
@@ -16,8 +16,8 @@ import gym
 
 import warnings
 
-from stable_baselines.common.vec_env import VecEnv, sync_envs_normalization, DummyVecEnv
-from stable_baselines.common.evaluation import evaluate_policy
+from myGym.stable_baselines_mygym.common.vec_env import VecEnv, sync_envs_normalization, DummyVecEnv
+from myGym.stable_baselines_mygym.common.evaluation import evaluate_policy
 
 
 class CustomEvalCallback(EvalCallback):
