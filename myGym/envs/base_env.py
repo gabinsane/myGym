@@ -232,10 +232,10 @@ class BaseEnv(gym.Env):
         print("#---------Episode-Summary---------#")
         print("Episode number: " + str(self.episode_number))
         print("Episode's number of steps: " + str(self.episode_steps))
-        print("Episode status: " + episode_status)
+        #print("Episode status: " + episode_status)
         print("Episode info: " + self.episode_info)
         print("Episode reward: " + str(self.episode_reward))
-        print("Last step reward: " + str(self.reward.rewards_history[-1]))
+        #print("Last step reward: " + str(self.reward.rewards_history[-1]))
         print("#---------------------------------#")
 
         for key, value in info_dict.items():

@@ -178,6 +178,7 @@ class HackEnv(CameraEnv):
             :return done: (bool) Whether this stop is episode's final
             :return info: (dict) Additional information about step
         """
+        done = False
         actions_res = actions.reshape(-1,2)
         for robot_idx, action in enumerate(actions_res):
             if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
@@ -188,11 +189,15 @@ class HackEnv(CameraEnv):
         self._observation = self.get_observation()
         reward = self.compute_reward(observation=self._observation)
         self.episode_reward += np.mean(reward)  # not sure where this is used
-        #info = {'d': self.task.last_distance / self.task.init_distance,
-        #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
+        info = {'d': 1,#@TODO self.task.last_distance / self.task.init_distance,
+                'p': int(self.parcels_done),
+                'f': False}  ## @TODO can we log number of sorted parcels?
         self.time_counter += self.timestep
         self.episode_steps += 1
-        return self._observation, reward[0], False, {} #@TODO reshape obs/reward to work with NN
+        if self.episode_steps >= self.max_steps:
+            done = True
+            self._print_episode_summary(info)
+        return self._observation, np.sum(reward), done, info #@TODO reshape obs/reward to work with NN
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)

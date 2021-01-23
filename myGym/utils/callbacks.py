@@ -113,7 +113,8 @@ class CustomEvalCallback(EvalCallback):
                 episode_reward += reward
                 # Info is list with dict inside
                 #info = info[0]
-                is_successful = not info['f']
+                #is_successful = not info['f']
+                is_successful = info['p']
                 distance_error = info['d']
 
                 if self.physics_engine == "pybullet":
