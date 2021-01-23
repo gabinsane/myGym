@@ -3,6 +3,7 @@ import pkg_resources
 import pybullet
 import numpy as np
 import math
+import time
 
 currentdir = pkg_resources.resource_filename("myGym", "envs")
 repodir = pkg_resources.resource_filename("myGym", "")
@@ -16,6 +17,7 @@ class HackRobot:
     """
     def __init__(self,
                  position=[-0.1, 0, 0.07], orientation=0,
+                 timestep=0.125,
                  dimension_velocity = 0.5,
                  max_velocity = 10.,
                  max_force = 500.,
@@ -28,6 +30,7 @@ class HackRobot:
         #self.orientation = np.array(orientation)
         #self.orientation = self.p.getQuaternionFromEuler(self.orientation)
         self.theta = orientation
+        self.timestep = timestep
 
         self.max_velocity = max_velocity
         self.max_force = max_force
@@ -121,3 +124,32 @@ class HackRobot:
 
         self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
                                          self.p.getQuaternionFromEuler([0,0,self.theta]))
+
+    def apply_action_velo(self, action):
+        """
+        Apply action command to robot in simulated environment
+
+        Parameters:
+            :param action: (list) Desired action data
+        """
+        self.theta = action[0]
+        action_type = np.rint(action[1])
+        max_velocity = action[2]
+        dx = action_type * max_velocity * np.sin(self.theta)
+        dy = action_type * max_velocity * np.cos(self.theta)
+
+        self.p.resetBaseVelocity(
+            self.robot_uid,
+            [dx, dy, 0],
+            [0, 0, 0])
+        self.p.stepSimulation()
+        time.sleep(self.timestep)#1./240.
+        print(self.p.getBaseVelocity(self.robot_uid))
+
+        #self.position = np.add(self.position, [dx, dy, 0])
+        #self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
+        #                                 self.p.getQuaternionFromEuler([0,0,self.theta]))
+        self.position = self.get_position()
+        self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
+                                         self.p.getQuaternionFromEuler([0,0,self.theta]))
+        

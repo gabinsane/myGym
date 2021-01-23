@@ -35,7 +35,8 @@ class BaseEnv(gym.Env):
                  max_steps=1024,
                  show_bounding_boxes_gui=False,
                  changing_light_gui=False,
-                 shadows_on_gui=True
+                 shadows_on_gui=True,
+                 timestep=1./240.
                  ):
         self.gui_on = gui_on
         self.max_steps = max_steps
@@ -56,7 +57,8 @@ class BaseEnv(gym.Env):
         self.episode_info = ""
 
         # Set general params
-        self.time_step = 1. / 240.
+        #self.time_step = 1. / 240.
+        self.time_step = timestep
         self.urdf_root = pybullet_data.getDataPath()
         self.observation = {}
 
@@ -92,7 +94,7 @@ class BaseEnv(gym.Env):
         """
         Set GUI parameters: camera, shadows, extra elements
         """
-        self.p.resetDebugVisualizerCamera(3.3, 0, -41, [0.0, 0.0, 0.33])
+        self.p.resetDebugVisualizerCamera(3.3, -40, -41, [0.0, 0.0, 0.33])
         self.p.configureDebugVisualizer(self.p.COV_ENABLE_SHADOWS, self.shadows_on_gui)
         self.p.configureDebugVisualizer(self.p.COV_ENABLE_GUI, 0)
 

@@ -87,7 +87,7 @@ class HackEnv(CameraEnv):
                           [coords[0]*self.field_length,coords[1]*self.field_length,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "hole{}".format(ix))
 
         for robot_id in range(self.num_robots):
-            self.robots.append(HackRobot(position = [6.8+robot_id*0.75, 0, 0], pybullet_client=self.p))
+            self.robots.append(HackRobot(position = [6.8+robot_id*0.75, 0, 0], timestep = self.timestep, pybullet_client=self.p))
 
         for ix, coords in enumerate(self.humans):
             self._add_scene_object_uid(self.p.loadURDF(
@@ -218,4 +218,8 @@ class HackEnv(CameraEnv):
         Parameters:
             :param action: (list) Action data returned by trained model
         """
-        self.robots[robot_idx].apply_action(np.append(action, 2))
+        #@TODO apply_action_velo
+        if self.robots_states[robot_idx] == 1:
+            self.robots[robot_idx].apply_action(np.append(action, 2)) #change max velo - loaded
+        else:
+            self.robots[robot_idx].apply_action(np.append(action, 4)) #unloaded
