@@ -469,33 +469,34 @@ class Runner(AbstractEnvRunner):
         mb_states = self.states
         ep_infos = []
         for _ in range(self.n_steps):
-            actions, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones)
-            mb_obs.append(self.obs.copy())
-            mb_actions.append(actions)
-            mb_values.append(values)
-            mb_neglogpacs.append(neglogpacs)
-            mb_dones.append(self.dones)
-            clipped_actions = actions
-            # Clip the actions to avoid out of bound error
-            if isinstance(self.env.action_space, gym.spaces.Box):
-                clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
-            self.obs[:], rewards, self.dones, infos = self.env.step(clipped_actions)
+            for i in range(10):
+                actions, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones)
+                mb_obs.append(self.obs.copy())
+                mb_actions.append(actions)
+                mb_values.append(values)
+                mb_neglogpacs.append(neglogpacs)
+                mb_dones.append(self.dones)
+                clipped_actions = actions
+                # Clip the actions to avoid out of bound error
+                if isinstance(self.env.action_space, gym.spaces.Box):
+                    clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
+                self.obs[:], rewards, self.dones, infos = self.env.step(clipped_actions)
 
-            self.model.num_timesteps += self.n_envs
+                self.model.num_timesteps += self.n_envs
 
-            if self.callback is not None:
-                # Abort training early
-                self.callback.update_locals(locals())
-                if self.callback.on_step() is False:
-                    self.continue_training = False
-                    # Return dummy values
-                    return [None] * 9
+                if self.callback is not None:
+                    # Abort training early
+                    self.callback.update_locals(locals())
+                    if self.callback.on_step() is False:
+                        self.continue_training = False
+                        # Return dummy values
+                        return [None] * 9
 
-            for info in infos:
-                maybe_ep_info = info.get('episode')
-                if maybe_ep_info is not None:
-                    ep_infos.append(maybe_ep_info)
-            mb_rewards.append(rewards)
+                for info in infos:
+                    maybe_ep_info = info.get('episode')
+                    if maybe_ep_info is not None:
+                        ep_infos.append(maybe_ep_info)
+                mb_rewards.append(rewards)
         # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32)

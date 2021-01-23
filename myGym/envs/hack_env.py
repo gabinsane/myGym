@@ -197,7 +197,8 @@ class HackEnv(CameraEnv):
         if self.episode_steps >= self.max_steps:
             done = True
             self._print_episode_summary(info)
-        return self._observation, np.sum(reward), done, info #@TODO reshape obs/reward to work with NN
+        #return self._observation, np.sum(reward), done, info #@TODO reshape obs/reward to work with NN
+        return self._observation, reward, done, info #@TODO reshape obs/reward to work with NN
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)

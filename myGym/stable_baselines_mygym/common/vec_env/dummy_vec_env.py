@@ -27,10 +27,10 @@ class DummyVecEnv(VecEnv):
         self.keys, shapes, dtypes = obs_space_info(obs_space)
 
         self.buf_obs = OrderedDict([
-            (k, np.zeros((self.num_envs,) + tuple(shapes[k]), dtype=dtypes[k]))
+            (k, np.zeros((self.num_envs,10) + tuple(shapes[k]), dtype=dtypes[k]))
             for k in self.keys])
-        self.buf_dones = np.zeros((self.num_envs,), dtype=np.bool)
-        self.buf_rews = np.zeros((self.num_envs,), dtype=np.float32)
+        self.buf_dones = np.zeros((self.num_envs,10), dtype=np.bool)
+        self.buf_rews = np.zeros((self.num_envs,10), dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
         self.metadata = env.metadata
@@ -40,14 +40,20 @@ class DummyVecEnv(VecEnv):
 
     def step_wait(self):
         for env_idx in range(self.num_envs):
-            obs, self.buf_rews[env_idx], self.buf_dones[env_idx], self.buf_infos[env_idx] =\
+            obs_help, buf_rews_help, buf_dones_help, buf_infos_help =\
                 self.envs[env_idx].step(self.actions[env_idx])
-            if self.buf_dones[env_idx]:
-                # save final observation where user can get it, then reset
-                self.buf_infos[env_idx]['terminal_observation'] = obs
-                obs = self.envs[env_idx].reset()
-            for obs_one in obs:
-                self._save_obs(env_idx, obs_one)
+            for idx in range(len(buf_rews_help)):
+                obs = obs_help[idx]
+                self.buf_rews[env_idx][idx]=buf_rews_help[idx]
+                self.buf_dones[env_idx][idx]=buf_dones_help
+                self.buf_infos[env_idx][idx]=buf_infos_help
+                if self.buf_dones[env_idx][idx]:
+                    # save final observation where user can get it, then reset
+                    self.buf_infos[env_idx][idx]['terminal_observation'] = obs
+                    obs = self.envs[env_idx].reset()
+                #for obs_one in obs:
+                self._save_obs(env_idx, idx, obs)
+
         return (self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones),
                 deepcopy(self.buf_infos))
 
@@ -60,8 +66,8 @@ class DummyVecEnv(VecEnv):
     def reset(self):
         for env_idx in range(self.num_envs):
             obs = self.envs[env_idx].reset()
-            for obs_one in obs:
-                self._save_obs(env_idx, obs_one)
+            for idx in range(len(obs)):
+                self._save_obs(env_idx, idx, obs[idx])
         return self._obs_from_buf()
 
     def close(self):
@@ -88,12 +94,12 @@ class DummyVecEnv(VecEnv):
         else:
             return super().render(mode=mode)
 
-    def _save_obs(self, env_idx, obs):
+    def _save_obs(self, env_idx, idx, obs):
         for key in self.keys:
             if key is None:
-                self.buf_obs[key][env_idx] = obs
+                self.buf_obs[key][env_idx][idx] = obs
             else:
-                self.buf_obs[key][env_idx] = obs[key]
+                self.buf_obs[key][env_idx][idx] = obs[key]
 
     def _obs_from_buf(self):
         return dict_to_obs(self.observation_space, copy_obs_dict(self.buf_obs))
