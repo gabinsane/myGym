@@ -148,7 +148,7 @@ class HackEnv(CameraEnv):
         #return np.zeros((self.num_robots, 6), np.float) #DEBUG
         return self.task.get_observation()
 
-    def check_collision(self):
+    def check_collision(self): #@TODO
         obs_after_actions = self.get_observation()
         for i in range(self.num_robots):
             for j in range(self.num_robots):
@@ -156,8 +156,8 @@ class HackEnv(CameraEnv):
                     continue   
                 vector1 = obs_after_actions[i][0:2] - obs_after_actions[j][0:2]
                 ss = np.linalg.norm(vector1) #dist between two bots
-                if ss < 0.5: # bots in collision
-                    print('collision')
+                #if ss < 0.5: # bots in collision
+                    #print('collision')
 
     def step(self, actions):
         """
@@ -171,8 +171,8 @@ class HackEnv(CameraEnv):
             :return done: (bool) Whether this stop is episode's final
             :return info: (dict) Additional information about step
         """
-        actions = actions.reshape(-1,2)
-        for robot_idx, action in enumerate(actions):
+        actions_res = actions.reshape(-1,2)
+        for robot_idx, action in enumerate(actions_res):
             if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
                 self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
             else:
@@ -185,7 +185,7 @@ class HackEnv(CameraEnv):
         #        'p': int(self.parcels_done)}  ## @TODO can we log number of sorted parcels?
         self.time_counter += self.timestep
         self.episode_steps += 1
-        return self._observation, reward, None, None
+        return self._observation, reward[0], False, {} #@TODO reshape obs/reward to work with NN
 
     def compute_reward(self, observation):
         reward = self.reward.compute(observation)
