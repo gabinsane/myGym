@@ -46,7 +46,8 @@ class DummyVecEnv(VecEnv):
                 # save final observation where user can get it, then reset
                 self.buf_infos[env_idx]['terminal_observation'] = obs
                 obs = self.envs[env_idx].reset()
-            self._save_obs(env_idx, obs)
+            for obs_one in obs:
+                self._save_obs(env_idx, obs_one)
         return (self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones),
                 deepcopy(self.buf_infos))
 
@@ -59,7 +60,8 @@ class DummyVecEnv(VecEnv):
     def reset(self):
         for env_idx in range(self.num_envs):
             obs = self.envs[env_idx].reset()
-            self._save_obs(env_idx, obs)
+            for obs_one in obs:
+                self._save_obs(env_idx, obs_one)
         return self._obs_from_buf()
 
     def close(self):
