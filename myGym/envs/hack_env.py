@@ -36,7 +36,7 @@ class HackEnv(CameraEnv):
         self.robots = []
         self.field_length = 0.75
         self.holes = self.make_holes_layout()  # list of coordinates of all holes
-        self.humans = [[30,0],[20,0]] # list of coordinates of all humans
+        self.humans = [[25,0],[29,0],[33,0],[37,0],[41,0]] # list of coordinates of all humans
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
         self.obs_space = obs_space
@@ -50,21 +50,22 @@ class HackEnv(CameraEnv):
         self.robots_states = [0] * self.num_robots  # 0 for unloaded, 1 for loaded
         self.robots_waits = [0] * self.num_robots  # num steps to wait (loading, unloading)
         self.timestep = 0.125 #sec
-
-
         super(HackEnv, self).__init__(active_cameras=active_cameras, render_on=render_on, gui_on=gui_on)
 
     def make_holes_layout(self):
         coord_list = []
-        rowposes = list(range(3,84)[0::3])
-        rowposes2 = list(range(2,84)[0::3])
-        colposes = list(range(4,42)[0::4])
-        colposes2 = list(range(2,42)[0::4])
+        rowposes = list(range(1,82)[0::3])
+        rowposes2 = list(range(0,82)[0::3])
+        colposes = list(range(5,42)[0::4])
+        colposes2 = list(range(3,42)[0::4])
         for ix, num in enumerate(rowposes):
             for ixx, num2 in enumerate(colposes):
                 coord_list.append([num, num2])
         for ix, num in enumerate(rowposes2):
             for ixx, num2 in enumerate(colposes2):
+                if len(coord_list) == 500:
+                    break
+                else:
                     coord_list.append([num, num2])
         return coord_list
 
@@ -83,10 +84,16 @@ class HackEnv(CameraEnv):
         for ix, coords in enumerate(self.holes):
             self._add_scene_object_uid(self.p.loadURDF(
                 pkg_resources.resource_filename("myGym", "envs/objects/hack_objects/target.urdf"),
-                                            [coords[0]*self.field_length,coords[1]*self.field_length,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "hole{}".format(ix))
+                          [coords[0]*self.field_length,coords[1]*self.field_length,0],[0,0,0,1],useFixedBase=True, useMaximalCoordinates=True), "hole{}".format(ix))
 
         for robot_id in range(self.num_robots):
-            self.robots.append(HackRobot(position = [0+robot_id*0.75, 0, 0], pybullet_client=self.p))
+            self.robots.append(HackRobot(position = [6.8+robot_id*0.75, 0, 0], pybullet_client=self.p))
+
+        for ix, coords in enumerate(self.humans):
+            self._add_scene_object_uid(self.p.loadURDF(
+                pkg_resources.resource_filename("myGym", "envs/objects/hack_objects/humanoid.urdf"),
+                [coords[0] * self.field_length, coords[1] * self.field_length, 0.5], [0, 0, 0, 1], useFixedBase=True,
+                useMaximalCoordinates=True), "human{}".format(ix))
 
     def _set_observation_space(self):
         """

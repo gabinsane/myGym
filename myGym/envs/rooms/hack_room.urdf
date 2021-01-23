@@ -13,7 +13,7 @@
     <visual>
       <origin rpy="1.57 0 0" xyz="0 0 -0.05"/>
       <geometry>
-		<mesh filename="./obj/room3.obj" scale="10 10 10"/>
+		<mesh filename="./obj/room3.obj" scale="1 1 1"/>
       </geometry>
        <material name="white">
         <color rgba=".7 .7 .7 1"/>
