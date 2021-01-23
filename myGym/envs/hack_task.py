@@ -43,7 +43,7 @@ class TaskModule():
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
         self.obstacle_threshold = 0.15  # considered as collision
 
-        self.obsdim = (self.env.num_robots, 6)
+        self.obsdim = 6
 
     def reset_task(self):
         """

@@ -100,7 +100,7 @@ class HackEnv(CameraEnv):
         Set observation space type, dimensions and range
         """
         observationDim = self.task.obsdim
-        observation_high = np.full(observationDim, 100)
+        observation_high = np.array([100] * observationDim)
         self.observation_space = spaces.Box(-observation_high,
                                             observation_high)
 
