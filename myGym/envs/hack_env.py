@@ -35,7 +35,7 @@ class HackEnv(CameraEnv):
         self.num_robots = num_robots
         self.robots = []
         self.field_length = 0.75
-        self.holes = self.make_holes_layout()  # list of coordinates of all holes
+        self.holes = self.make_holes_layout()[:50]  # list of coordinates of all holes
         self.humans = [[25,0],[29,0],[33,0],[37,0],[41,0]] # list of coordinates of all humans
         self.task = TaskModule(logdir=logdir, env=self)
         self.reward = HackReward(self, self.task, num_robots=num_robots)
@@ -109,11 +109,9 @@ class HackEnv(CameraEnv):
         Set action space dimensions and range
         """
         action_dim = 2
-        self.action_low = np.tile([-np.pi, -1], self.num_robots)
-        self.action_high = np.tile([np.pi, 1], self.num_robots)
+        self.action_low = np.tile([-np.pi, -1],action_dim)
+        self.action_high = np.tile([np.pi, 1], action_dim)
         self.action_space = spaces.Box(self.action_low, self.action_high)
-
-
 
 
     def reset(self, hard=False):
@@ -180,6 +178,8 @@ class HackEnv(CameraEnv):
         """
         done = False
         actions_res = actions.reshape(-1,2)
+        if actions_res.shape[0] == 100:
+            print(bulls)
         for robot_idx, action in enumerate(actions_res):
             if self.robots_waits[robot_idx] > 0: #check if bot is loading/unloading
                 self.robots_waits[robot_idx] -= self.timestep #if waiting, sub step time
