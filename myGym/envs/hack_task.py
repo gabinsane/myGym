@@ -38,6 +38,8 @@ class TaskModule():
         self.current_norm_distance = None
         self.stored_observation = []
         self.fig = None
+        self.s_from_holes = 100  # from how many holes to sample from
+        self.s_from_humans = 5  # from how many humans to sample from
         self.xygoals = [self.env.humans[0]]*self.env.num_robots # home for loading #@TODO SAMPLE FROM HUMANS
 
         self.goal_threshold = 0.1  # goal reached, robot unloads parcel
@@ -183,11 +185,13 @@ class TaskModule():
             if goal_reached[idx] and self.env.robots_states[idx] == 1: #ready for unloading
                 self.env.robots_waits[idx] = 1 #wait 1s
                 self.env.robots_states[idx] = 0 #unload
-                self.xygoals[idx] = self.env.humans[0] #@TODO SAMPLE from all humans
+                self.xygoals[idx] = random.sample(self.env.humans[:self.s_from_humans])
+                p.changeVisualShape(self.env.robots[idx].robot_uid, rgbaColor=[0,255,255])
             elif goal_reached[idx] and self.env.robots_states[idx] == 0: #ready for loading
                 self.env.robots_waits[idx] = 2 #wait 2s
                 self.env.robots_states[idx] = 1 #load
-                self.xygoals[idx] = self.env.holes[0] #@TODO SAMPLE from all holes
+                p.changeVisualShape(self.env.robots[idx].robot_uid, rgbaColor=[0,255,0])
+                self.xygoals[idx] = random.sample(self.env.holes[:self.s_from_holes])
 
         return goal_reached
 
