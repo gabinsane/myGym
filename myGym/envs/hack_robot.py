@@ -132,24 +132,10 @@ class HackRobot:
         Parameters:
             :param action: (list) Desired action data
         """
-        self.theta = action[0]
-        action_type = np.rint(action[1])
-        max_velocity = action[2]
-        dx = action_type * max_velocity * np.sin(self.theta)
-        dy = action_type * max_velocity * np.cos(self.theta)
 
-        self.p.resetBaseVelocity(
+        time.sleep(0.02)
+        pybullet.resetBaseVelocity(
             self.robot_uid,
-            [dx, dy, 0],
-            [0, 0, 0])
-        self.p.stepSimulation()
-        time.sleep(self.timestep)#1./240.
-        print(self.p.getBaseVelocity(self.robot_uid))
-
-        #self.position = np.add(self.position, [dx, dy, 0])
-        #self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
-        #                                 self.p.getQuaternionFromEuler([0,0,self.theta]))
-        self.position = self.get_position()
-        self.p.resetBasePositionAndOrientation(self.robot_uid, self.position,
-                                         self.p.getQuaternionFromEuler([0,0,self.theta]))
-        
+            [action[0], action[1]],
+            [0, 0, action[2]],
+            physicsClientId=self.p)
