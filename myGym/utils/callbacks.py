@@ -107,10 +107,13 @@ class CustomEvalCallback(EvalCallback):
             distance_error = 0
             episode_reward = 0.0
             while not done:
-                steps_sum += 1
-                action, state = model.predict(obs, deterministic=deterministic)
-                obs, reward, done, info = self.eval_env.step(action)
-                episode_reward += reward
+                actions = []
+                for ob in obs:
+                    steps_sum += 1
+                    action, state = model.predict(ob, deterministic=deterministic)
+                    actions.append(action)
+                obs, reward, done, info = self.eval_env.step(np.array(actions))
+                episode_reward += np.sum(reward)
                 # Info is list with dict inside
                 #info = info[0]
                 #is_successful = not info['f']
