@@ -1,6 +1,6 @@
 # Robothon 2021 Project - Robots and Artificial Intelligence 
 
-This repository contains our submission code for Robothon 2021. It was forked from MyGym, a modular toolkit for robotic RL simulator, developed by the same authors as this project. To read more about MyGym, please visit [the original repository](https://github.com/incognite-lab/myGym).
+This repository contains our submission code for Robothon 2021. It was forked from myGym, a modular toolkit for robotic RL simulator, developed by the same authors as this project. To read more about myGym, please visit [the original repository](https://github.com/incognite-lab/myGym).
 
 
 ## Supported systems
@@ -15,7 +15,7 @@ GPU acceleration strongly reccomended
 
 Clone the repository:
 
-`git https://github.com/gabinsane/myGym.git
+`git clone https://github.com/gabinsane/myGym.git`
 
 `cd mygym`
 
